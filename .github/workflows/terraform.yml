@@ -46,15 +46,15 @@ jobs:
         id: init
         run: |
           terraform init \
-          -backend-config="endpoints.s3=https://hel1.your-objectstorage.com" \
-          -backend-config="bucket=baphomet" \
-          -backend-config="key=terraform.tfstate" \
-          -backend-config="region=hel1" \
-          -backend-config="skip_metadata_api_check=true" \
-          -backend-config="use_path_style=true" \
-          -backend-config="skip_region_validation=true" \
-          -backend-config="skip_credentials_validation=true" \
-          -backend-config="skip_requesting_account_id=true"
+            -backend-config=bucket=baphomet \
+            -backend-config=key=terraform.tfstate \
+            -backend-config=region=hel1 \
+            -backend-config=endpoint=https://hel1.your-objectstorage.com \
+            -backend-config=skip_metadata_api_check=true \
+            -backend-config=use_path_style=true \
+            -backend-config=skip_region_validation=true \
+            -backend-config=skip_credentials_validation=true \
+            -backend-config=skip_requesting_account_id=true
 
       - name: Terraform format
         id: fmt
