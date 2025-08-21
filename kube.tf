@@ -794,9 +794,8 @@ module "kube-hetzner" {
   # The number of different DNS servers is limited to 3 by Kubernetes itself.
   # It's always a good idea to have at least 1 IPv4 and 1 IPv6 DNS server for robustness.
   dns_servers = [
-    "1.1.1.1",
     "8.8.8.8",
-    "2606:4700:4700::1111",
+    "2606:4700:4700::1111"
   ]
 
   # When this is enabled, rather than the first node, all external traffic will be routed via a control-plane loadbalancer, allowing for high availability.
