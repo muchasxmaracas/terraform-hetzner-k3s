@@ -44,7 +44,8 @@ jobs:
 
       - name: Terraform init
         id: init
-        run: terraform init \
+        run: |
+          terraform init \
           -backend-config="endpoints.s3=https://hel1.your-objectstorage.com" \
           -backend-config="bucket=baphomet" \
           -backend-config="key=terraform.tfstate" \
@@ -66,7 +67,8 @@ jobs:
       - name: Terraform plan
         id: plan
         # Removed the 'if' condition so this step always runs
-        run: terraform plan \
+        run: |
+          terraform plan \
              -var "ssh_public_key=ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIBYt98G/lAhpNxBLY1JAGZcHSbMTuBJHwFFwMTkt/my sandro@sandros-MacBook-Pro.local" \
              -var "ssh_private_key=${{ secrets.SSH_PRIVATE_KEY }}" \
              -var "ssh_additional_public_keys=[ \"ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIBYt98G/lAhpNxBLY1JAGZcHSbMTuBJHwFFwMTkt/my sandro@sandros-MacBook-Pro.local\" ]"
