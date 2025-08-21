@@ -16,6 +16,8 @@ env:
   TF_VAR_hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
 
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  TF_VAR_ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKC6jxq2Lbiwe4cjcB8itTmh4a6ldDR2KVGSM2PvrZwb sandro@DESKTOP-E6TGITL"
+  TF_VAR_ssh_additional_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIBYt98G/lAhpNxBLY1JAGZcHSbMTuBJHwFFwMTkt/my sandro@sandros-MacBook-Pro.local"
 
   # Credentials for deployment to AWS
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -66,11 +68,7 @@ jobs:
 
       - name: Terraform validate
         id: validate
-        run: |
-          terraform validate \
-            -var "ssh_public_key=ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIBYt98G/lAhpNxBLY1JAGZcHSbMTuBJHwFFwMTkt/my sandro@sandros-MacBook-Pro.local" \
-            -var "ssh_private_key=${{ secrets.SSH_PRIVATE_KEY }}" \
-            -var "ssh_additional_public_keys=[ \"ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIBYt98G/lAhpNxBLY1JAGZcHSbMTuBJHwFFwMTkt/my sandro@sandros-MacBook-Pro.local\" ]"
+        run: terraform validate
 
       - name: Terraform plan
         id: plan

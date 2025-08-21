@@ -1147,9 +1147,19 @@ variable "hcloud_token" {
   default   = ""
 }
 
+variable "ssh_public_key" {
+  description = "The SSH public key for the cluster nodes."
+  type        = string
+}
 
 variable "ssh_private_key" {
-  sensitive = true
-  description = "The SSH private key."
+  sensitive   = true
+  description = "The SSH private key for authenticating to the cluster nodes."
   type        = string
+}
+
+variable "ssh_additional_public_keys" {
+  description = "A list of additional SSH public keys for other users."
+  type        = list(string)
+  default     = []
 }
