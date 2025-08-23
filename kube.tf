@@ -1267,7 +1267,7 @@ resource "aws_route53_record" "rancher_dns_v4" {
 }
 
 # AAAA records for rancher
-resource "aws_route53_record" "rancher_dns_v4" {
+resource "aws_route53_record" "rancher_dns_v6" {
   zone_id = var.route53_hosted_zone_id
   name    = "rancher.${var.base_domain}"
   type    = "AAAA"
