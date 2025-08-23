@@ -149,7 +149,7 @@ module "kube-hetzner" {
 
   control_plane_nodepools = [
     {
-      name        = "control-plane-1",
+      name        = "control-plane-0",
       server_type = "cx22",
       location    = "fsn1",
       labels      = [],
@@ -172,7 +172,7 @@ module "kube-hetzner" {
       # disable_ipv6 = true
     },
     {
-      name        = "control-plane-2",
+      name        = "control-plane-1",
       server_type = "cx22",
       location    = "nbg1",
       labels      = [],
@@ -195,7 +195,7 @@ module "kube-hetzner" {
       # disable_ipv6 = true
     },
     {
-      name        = "control-plane-3",
+      name        = "control-plane-2",
       server_type = "cx22",
       location    = "hel1",
       labels      = [],
@@ -221,7 +221,7 @@ module "kube-hetzner" {
 
   agent_nodepools = [
     {
-      name        = "worker-1",
+      name        = "worker-0",
       server_type = "cx22",
       location    = "hel1",
       labels      = [],
@@ -235,9 +235,23 @@ module "kube-hetzner" {
       # backups = true
     },
     {
-      name        = "worker-2",
+      name        = "worker-1",
       server_type = "cx32",
       location    = "nbg1",
+      labels      = [],
+      taints      = [],
+      count       = 1
+
+      # Fine-grained control over placement groups (nodes in the same group are spread over different physical servers, 10 nodes per placement group max):
+      placement_group = "workers"
+
+      # Enable automatic backups via Hetzner (default: false)
+      # backups = true
+    },
+    {
+      name        = "worker-2",
+      server_type = "cx32",
+      location    = "fsn1",
       labels      = [],
       taints      = [],
       count       = 1
@@ -1360,5 +1374,5 @@ variable "control_plane_count" {
 variable "agent_count" {
   description = "The number of agent (worker) nodes to provision."
   type        = number
-  default     = 3 # Example default value
+  default     = 2 # Example default value
 }
