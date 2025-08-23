@@ -1304,8 +1304,9 @@ variable "ssh_public_key" {
 }
 
 variable "ssh_additional_public_keys" {
-  type        = string
+  type        = list(string)
   description = "Additional SSH keys for cluster nodes."
+  default     = []
 }
 
 variable "ssh_private_key" {
