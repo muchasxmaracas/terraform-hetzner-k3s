@@ -1,0 +1,54 @@
+name: "Terraform Destroy Infrastructure"
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_destroy:
+        description: 'Type "destroy" to confirm deletion of the infrastructure.'
+        required: true
+        default: ''
+
+jobs:
+  terraform_destroy:
+    name: "Terraform Destroy"
+    if: github.event.inputs.confirm_destroy == 'destroy'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./
+
+    env:
+      TF_LOG: INFO
+      TF_VAR_hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
+      TF_VAR_ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+      TF_VAR_hcloud_s3_access_key: ${{ secrets.HCLOUD_S3_ACCESS_KEY }}
+      TF_VAR_hcloud_s3_secret_key: ${{ secrets.HCLOUD_S3_SECRET_KEY }}
+      TF_VAR_route53_hosted_zone_id: ${{ secrets.ROUTE53_HOSTED_ZONE_ID }}
+      TF_VAR_base_domain: ${{ secrets.BASE_DOMAIN }}
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.13.0
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Terraform init
+        id: init
+        run: terraform init
+
+      - name: Terraform destroy
+        id: destroy
+        run: terraform destroy -auto-approve
