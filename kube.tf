@@ -1174,7 +1174,20 @@ provider "aws" {
 
 terraform {
   backend "s3" {
+    bucket                  = "baphomet" # Replace with your bucket name
+    key                     = "terraform.tfstate"
+    region                  = "hel1"
+    endpoints = {
+      s3 = "https://hel1.your-objectstorage.com"
     }
+    access_key              = ""  # Leave blank for local testing, will be set by the CI/CD pipeline
+    secret_key              = ""  # Leave blank for local testing, will be set by the CI/CD pipeline
+    skip_metadata_api_check = true
+    use_path_style          = true
+    skip_region_validation  = true
+    skip_credentials_validation = true
+    skip_requesting_account_id = true
+  }
   required_version = ">= 1.5.0"
   required_providers {
     hcloud = {
