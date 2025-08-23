@@ -12,6 +12,7 @@ module "kube-hetzner" {
     hcloud = hcloud
   }
 
+
   hcloud_token = var.hcloud_token != "" ? var.hcloud_token : local.hcloud_token
 
   # Then fill or edit the below values. Only the first values starting with a * are obligatory; the rest can remain with their default values, or you
@@ -512,7 +513,7 @@ module "kube-hetzner" {
   # we allow you to add a traefik_values, nginx_values or haproxy_values, see towards the end of this file in the advanced section.
   # After the cluster is deployed, you can always use HelmChartConfig definition to tweak the configuration.
   # If you want to disable both controllers set this to "none"
-  # ingress_controller = "nginx"
+  ingress_controller = "nginx"
   # Namespace in which to deploy the ingress controllers. Defaults to the ingress_controller variable, eg (haproxy, nginx, traefik)
   # ingress_target_namespace = ""
 
@@ -693,42 +694,31 @@ module "kube-hetzner" {
   # kubernetes.
   # https://kubernetes.io/docs/reference/access-authn-authz/authentication/#using-authentication-configuration
   #
-  # authentication_config = <<-EOT
-  #   apiVersion: apiserver.config.k8s.io/v1beta1
-  #   kind: AuthenticationConfiguration
-  #   jwt:
-  #   - issuer:
-  #       url: "https://token.actions.githubusercontent.com"
-  #       audiences:
-  #       - "https://github.com/octo-org"
-  #     claimMappings:
-  #       username:
-  #         claim: sub
-  #         prefix: "gh:"
-  #       groups:
-  #         claim: repository_owner
-  #         prefix: "gh:"
-  #     claimValidationRules:
-  #     - claim: repository
-  #       requiredValue: "octo-org/octo-repo"
-  #     - claim: "repository_visibility"
-  #       requiredValue: "public"
-  #     - claim: "ref"
-  #       requiredValue: "refs/heads/main"
-  #     - claim: "ref_type"
-  #       requiredValue: "branch"
-  #   - issuer:
-  #       url: "https://your.oidc.issuer"
-  #       audiences:
-  #       - "oidc_client_id"
-  #     claimMappings:
-  #       username:
-  #         claim: oidc_username_claim
-  #         prefix: "oidc:"
-  #       groups:
-  #         claim: oidc_groups_claim
-  #         prefix: "oidc:"
-  #   EOT
+  authentication_config = <<-EOT
+    apiVersion: apiserver.config.k8s.io/v1beta1
+    kind: AuthenticationConfiguration
+    jwt:
+    - issuer:
+        url: "https://token.actions.githubusercontent.com"
+        audiences:
+        - "https://github.com/"
+      claimMappings:
+        username:
+          claim: sub
+          prefix: "gh:"
+        groups:
+          claim: repository_owner
+          prefix: "gh:"
+      claimValidationRules:
+      - claim: repository
+        requiredValue: "muchasxmaracas/terraform-hetzner-k3s"
+      - claim: "repository_visibility"
+        requiredValue: "public"
+      - claim: "ref"
+        requiredValue: "refs/heads/main"
+      - claim: "ref_type"
+        requiredValue: "branch"
+    EOT
 
   # Set to true if util-linux breaks on the OS (temporary regression fixed in util-linux v2.41.1).
   k3s_prefer_bundled_bin = true
@@ -1265,6 +1255,24 @@ resource "aws_route53_record" "cluster_base_dns_v6" {
   type    = "AAAA"
   ttl     = 300
   records = module.kube-hetzner.control_planes_public_ipv6
+}
+
+# A records for rancher
+resource "aws_route53_record" "rancher_dns_v4" {
+  zone_id = var.route53_hosted_zone_id
+  name    = "rancher.${var.base_domain}"
+  type    = "A"
+  ttl     = 300
+  records = module.kube-hetzner.agents_public_ipv4
+}
+
+# AAAA records for rancher
+resource "aws_route53_record" "rancher_dns_v4" {
+  zone_id = var.route53_hosted_zone_id
+  name    = "rancher.${var.base_domain}"
+  type    = "AAAA"
+  ttl     = 300
+  records = module.kube-hetzner.agents_public_ipv6
 }
 
 output "control_plane_ips" {
