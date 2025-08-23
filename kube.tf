@@ -5,6 +5,7 @@ locals {
 
   # Your Hetzner token can be found in your Project > Security > API Token (Read & Write is required).
   hcloud_token = "xxxxxxxxxxx" # Secret in GitHub Actions Repo Secrets
+
   }
 
 module "kube-hetzner" {
@@ -1191,31 +1192,30 @@ terraform {
   }
 }
 resource "aws_route53_record" "control_plane_dns" {
-  for_each = length(module.kube-hetzner.control_planes_public_ipv4) > 0 ? toset(module.kube-hetzner.control_planes_public_ipv4) : toset([])
+  for_each = local.control_planes_map
 
   zone_id = var.route53_hosted_zone_id
-  name    = "cp-${index(module.kube-hetzner.control_planes_public_ipv4, each.value) + 1}.${var.base_domain}"
+  name    = "${each.key}.${var.base_domain}"
   type    = "A"
   ttl     = 300
   records = [each.value]
 }
 
-# A record for each agent node
 resource "aws_route53_record" "agent_dns_v4" {
-  for_each = length(module.kube-hetzner.agents_public_ipv4) > 0 ? toset(module.kube-hetzner.agents_public_ipv4) : toset([])
+  for_each = local.agents_ipv4_map
 
   zone_id = var.route53_hosted_zone_id
-  name    = "worker-${index(module.kube-hetzner.agents_public_ipv4, each.value) + 1}.${var.base_domain}"
+  name    = "${each.key}.${var.base_domain}"
   type    = "A"
   ttl     = 300
   records = [each.value]
 }
 
 resource "aws_route53_record" "agent_dns_v6" {
-  for_each = length(module.kube-hetzner.agents_public_ipv6) > 0 ? toset(module.kube-hetzner.agents_public_ipv6) : toset([])
+  for_each = local.agents_ipv6_map
 
   zone_id = var.route53_hosted_zone_id
-  name    = "worker-${index(module.kube-hetzner.agents_public_ipv6, each.value) + 1}.${var.base_domain}"
+  name    = "${each.key}.${var.base_domain}"
   type    = "AAAA"
   ttl     = 300
   records = [each.value]
