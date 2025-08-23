@@ -162,15 +162,3 @@ variable "network_id" {
   default     = null
   description = "The network id to attach the server to."
 }
-
-variable "control_plane_count" {
-  description = "The number of control plane nodes to provision."
-  type        = number
-  default     = 3 # Example default value
-}
-
-variable "agent_count" {
-  description = "The number of agent (worker) nodes to provision."
-  type        = number
-  default     = 3 # Example default value
-}
