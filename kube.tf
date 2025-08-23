@@ -965,8 +965,8 @@ module "kube-hetzner" {
   # MicroOS snapshot IDs to be used. Per default empty, the most recent image created using createkh will be used.
   # We recommend the default, but if you want to use specific IDs you can.
   # You can fetch the ids with the hcloud cli by running the "hcloud image list --selector 'microos-snapshot=yes'" command.
-  # microos_x86_snapshot_id = "1234567"
-  # microos_arm_snapshot_id = "1234567"
+  microos_x86_snapshot_id = "311967250"
+  microos_arm_snapshot_id = "311967249"
 
   ### ADVANCED - Custom helm values for packages above (search _values if you want to located where those are mentioned upper in this file)
   # ⚠️ Inside the _values variable below are examples, up to you to find out the best helm values possible, we do not provide support for customized helm values.
