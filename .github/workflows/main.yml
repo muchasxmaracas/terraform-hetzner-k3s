@@ -57,6 +57,10 @@ jobs:
             -backend-config=access_key=${{ secrets.HCLOUD_S3_ACCESS_KEY }} \
             -backend-config=secret_key=${{ secrets.HCLOUD_S3_SECRET_KEY }}
       
+      - name: Terraform format
+        id: fmt
+        run: terraform fmt
+
       - name: Terraform format check
         id: fmt-check
         run: terraform fmt -check
