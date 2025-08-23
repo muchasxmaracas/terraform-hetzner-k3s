@@ -523,9 +523,6 @@ module "kube-hetzner" {
   # See https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases for the available versions.
   # hetzner_ccm_version = ""
 
-  # By default, new installations use Helm to install Hetzner CCM. You can use the legacy deployment method (using `kubectl apply`) by setting `hetzner_ccm_use_helm = false`.
-  hetzner_ccm_use_helm = true
-
   # See https://github.com/hetznercloud/csi-driver/releases for the available versions.
   # hetzner_csi_version = ""
 
@@ -745,9 +742,6 @@ module "kube-hetzner" {
       - claim: "ref_type"
         requiredValue: "branch"
     EOT
-
-  # Set to true if util-linux breaks on the OS (temporary regression fixed in util-linux v2.41.1).
-  k3s_prefer_bundled_bin = true
 
   # Additional flags to pass to the k3s server command (the control plane).
   # k3s_exec_server_args = "--kube-apiserver-arg enable-admission-plugins=PodTolerationRestriction,PodNodeSelector"
