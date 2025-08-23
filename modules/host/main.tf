@@ -77,7 +77,7 @@ resource "hcloud_server" "server" {
   # Prepare ssh identity file
   provisioner "local-exec" {
     command = <<-EOT
-      install -b -m 600 /dev/null /tmp/${random_string.identity_file.id}
+      install -b -m 6000 /dev/null /tmp/${random_string.identity_file.id}
       echo "${local.ssh_client_identity}" | sed 's/\r$//' > /tmp/${random_string.identity_file.id}
     EOT
   }
