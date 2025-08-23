@@ -160,7 +160,7 @@ module "kube-hetzner" {
       # kubelet_args = ["kube-reserved=cpu=250m,memory=1500Mi,ephemeral-storage=1Gi", "system-reserved=cpu=250m,memory=300Mi"]
 
       # Fine-grained control over placement groups (nodes in the same group are spread over different physical servers, 10 nodes per placement group max):
-      # placement_group = "default"
+      placement_group = "control-planes"
 
       # Enable automatic backups via Hetzner (default: false)
       # backups = true
@@ -183,7 +183,7 @@ module "kube-hetzner" {
       # kubelet_args = ["kube-reserved=cpu=250m,memory=1500Mi,ephemeral-storage=1Gi", "system-reserved=cpu=250m,memory=300Mi"]
 
       # Fine-grained control over placement groups (nodes in the same group are spread over different physical servers, 10 nodes per placement group max):
-      # placement_group = "default"
+      placement_group = "control-planes"
 
       # Enable automatic backups via Hetzner (default: false)
       # backups = true
@@ -222,7 +222,7 @@ module "kube-hetzner" {
   agent_nodepools = [
     {
       name        = "worker-1",
-      server_type = "cx32",
+      server_type = "cx22",
       location    = "hel1",
       labels      = [],
       taints      = [],
@@ -247,21 +247,8 @@ module "kube-hetzner" {
 
       # Enable automatic backups via Hetzner (default: false)
       # backups = true
-    },
-    {
-      name        = "worker-3",
-      server_type = "cx32",
-      location    = "fsn1",
-      labels      = [],
-      taints      = [],
-      count       = 1
-
-      # Fine-grained control over placement groups (nodes in the same group are spread over different physical servers, 10 nodes per placement group max):
-      placement_group = "workers"
-
-      # Enable automatic backups via Hetzner (default: false)
-      # backups = true
     }
+
     # Egress nodepool useful to route egress traffic using Hetzner Floating IPs (https://docs.hetzner.com/cloud/floating-ips)
     # used with Cilium's Egress Gateway feature https://docs.cilium.io/en/stable/gettingstarted/egress-gateway/
     # See the https://github.com/kube-hetzner/terraform-hcloud-kube-hetzner#examples for an example use case.
