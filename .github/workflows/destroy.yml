@@ -47,7 +47,10 @@ jobs:
 
       - name: Terraform init
         id: init
-        run: terraform init
+        run: |
+          terraform init \
+            -backend-config=access_key=${{ secrets.HCLOUD_S3_ACCESS_KEY }} \
+            -backend-config=secret_key=${{ secrets.HCLOUD_S3_SECRET_KEY }}
 
       - name: Terraform destroy
         id: destroy
