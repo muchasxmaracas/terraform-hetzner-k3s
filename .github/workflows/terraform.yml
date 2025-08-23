@@ -83,6 +83,7 @@ jobs:
         # Removed the 'if' condition so this step always runs
         run: |
           export TF_VAR_hcloud_s3_access_key=${{ secrets.HCLOUD_S3_ACCESS_KEY }}
+          export TF_VAR_hcloud_s3_secret_key=${{ secrets.HCLOUD_S3_SECRET_KEY }}
           terraform plan \
             -var "ssh_private_key=${{ secrets.SSH_PRIVATE_KEY }}"
         continue-on-error: true
@@ -128,5 +129,6 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           export TF_VAR_hcloud_s3_access_key=${{ secrets.HCLOUD_S3_ACCESS_KEY }}
+          export TF_VAR_hcloud_s3_secret_key=${{ secrets.HCLOUD_S3_SECRET_KEY }}
           terraform apply -auto-approve -input=false \
             -var "ssh_private_key=${{ secrets.SSH_PRIVATE_KEY }}"
