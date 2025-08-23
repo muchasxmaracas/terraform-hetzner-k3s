@@ -11,6 +11,7 @@ module "kube-hetzner" {
   providers = {
     hcloud = hcloud
   }
+
   hcloud_token = var.hcloud_token != "" ? var.hcloud_token : local.hcloud_token
 
   # Then fill or edit the below values. Only the first values starting with a * are obligatory; the rest can remain with their default values, or you
@@ -1167,16 +1168,123 @@ provider "hcloud" {
   token = var.hcloud_token != "" ? var.hcloud_token : local.hcloud_token
 }
 
+provider "aws" {
+  region = "us-east-1" # Set your desired AWS region here
+}
+
 terraform {
   backend "s3" {
+    bucket                  = "baphomet" # Replace with your bucket name
+    key                     = "terraform.tfstate"
+    region                  = "hel1"
+    endpoints = {
+      s3 = "https://hel1.your-objectstorage.com"
     }
+    access_key              = ""  # Leave blank for local testing, will be set by the CI/CD pipeline
+    secret_key              = ""  # Leave blank for local testing, will be set by the CI/CD pipeline
+    skip_metadata_api_check = true
+    use_path_style          = true
+    skip_region_validation  = true
+    skip_credentials_validation = true
+    skip_requesting_account_id = true
+  }
   required_version = ">= 1.5.0"
   required_providers {
     hcloud = {
       source  = "hetznercloud/hcloud"
       version = ">= 1.51.0"
     }
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
   }
+}
+resource "aws_route53_record" "control_plane_dns" {
+  for_each = toset(module.kube-hetzner.control_planes_public_ipv4) 
+
+  zone_id = var.route53_hosted_zone_id
+  name    = "cp-${index(module.kube-hetzner.control_planes_public_ipv4, each.value) + 1}.${var.base_domain}"
+  type    = "A"
+  ttl     = 300
+  records = [each.value]
+}
+
+# A record for each agent node
+resource "aws_route53_record" "agent_dns_v4" {
+  for_each = toset(module.kube-hetzner.agents_public_ipv4)
+
+  zone_id = var.route53_hosted_zone_id
+  name    = "worker-${index(module.kube-hetzner.agents_public_ipv4, each.value) + 1}.${var.base_domain}"
+  type    = "A"
+  ttl     = 300
+  records = [each.value]
+}
+
+resource "aws_route53_record" "agent_dns_v6" {
+  for_each = toset(module.kube-hetzner.agents_public_ipv6)
+
+  zone_id = var.route53_hosted_zone_id
+  name    = "worker-${index(module.kube-hetzner.agents_public_ipv6, each.value) + 1}.${var.base_domain}"
+  type    = "AAAA"
+  ttl     = 300
+  records = [each.value]
+}
+
+# Wildcard A record for the cluster
+resource "aws_route53_record" "cluster_wildcard_dns_v4" {
+  zone_id = var.route53_hosted_zone_id
+  name    = "*.${var.base_domain}"
+  type    = "A"
+  ttl     = 300
+  records = module.kube-hetzner.control_planes_public_ipv4
+}
+
+# Wildcard AAAA record for the cluster
+resource "aws_route53_record" "cluster_wildcard_dns_v6" {
+  zone_id = var.route53_hosted_zone_id
+  name    = "*.${var.base_domain}"
+  type    = "AAAA"
+  ttl     = 300
+  records = module.kube-hetzner.control_planes_public_ipv6
+}
+
+# Base A record for the cluster
+resource "aws_route53_record" "cluster_base_dns_v4" {
+  zone_id = var.route53_hosted_zone_id
+  name    = var.base_domain
+  type    = "A"
+  ttl     = 300
+  records = module.kube-hetzner.control_planes_public_ipv4
+}
+
+# Base AAAA record for the cluster
+resource "aws_route53_record" "cluster_base_dns_v6" {
+  zone_id = var.route53_hosted_zone_id
+  name    = var.base_domain
+  type    = "AAAA"
+  ttl     = 300
+  records = module.kube-hetzner.control_planes_public_ipv6
+}
+
+output "control_plane_ips" {
+  description = "The public IPv4 addresses of the control plane nodes."
+  value       = module.kube-hetzner.control_planes_public_ipv4
+}
+
+output "agent_ips" {
+  description = "The public IPv4 addresses of the agent nodes."
+  value       = module.kube-hetzner.agents_public_ipv4
+}
+
+output "control_plane_dns_names" {
+  description = "The DNS names of the control plane nodes."
+  value       = [for ip in module.kube-hetzner.control_planes_public_ipv4 : "cp-${index(module.kube-hetzner.control_planes_public_ipv4, ip) + 1}.${var.base_domain}"]
+}
+
+output "agent_dns_names" {
+  description = "The DNS names of the agent nodes."
+  value       = [for ip in module.kube-hetzner.agents_public_ipv4 : "worker-${index(module.kube-hetzner.agents_public_ipv4, ip) + 1}.${var.base_domain}"]
 }
 
 output "kubeconfig" {
@@ -1185,23 +1293,46 @@ output "kubeconfig" {
 }
 
 variable "hcloud_token" {
-  sensitive = true
-  default   = ""
+  type        = string
+  description = "The Hetzner Cloud API token."
+  sensitive   = true
 }
 
 variable "ssh_public_key" {
-  description = "The SSH public key for the cluster nodes."
   type        = string
-}
-
-variable "ssh_private_key" {
-  sensitive   = true
-  description = "The SSH private key for authenticating to the cluster nodes."
-  type        = string
+  description = "The public SSH key for cluster nodes."
 }
 
 variable "ssh_additional_public_keys" {
-  description = "A list of additional SSH public keys for other users."
   type        = list(string)
+  description = "Additional SSH keys for cluster nodes."
   default     = []
+}
+
+variable "ssh_private_key" {
+  type        = string
+  description = "The private SSH key for provisioning."
+  sensitive   = true
+}
+
+variable "route53_hosted_zone_id" {
+  type        = string
+  description = "The Route53 Hosted Zone ID where DNS records will be created."
+}
+
+variable "base_domain" {
+  type        = string
+  description = "Base domain used for reverse dns and public DNS records."
+}
+
+variable "hcloud_s3_access_key" {
+  type        = string
+  description = "The Hetzner S3 access key for the Terraform state backend."
+  sensitive   = true
+}
+
+variable "hcloud_s3_secret_key" {
+  type        = string
+  description = "The Hetzner S3 secret key for the Terraform state backend."
+  sensitive   = true
 }
