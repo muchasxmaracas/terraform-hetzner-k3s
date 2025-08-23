@@ -1204,7 +1204,7 @@ resource "aws_route53_record" "control_plane_dns" {
   for_each = toset(module.kube-hetzner.control_planes_public_ipv4) 
 
   zone_id = var.route53_hosted_zone_id
-  name    = "cp-${index(module.kube-hetzner.control_planes_public_ipv4, each.value) + 1}.${module.kube-hetzner.base_domain}"
+  name    = "cp-${index(module.kube-hetzner.control_planes_public_ipv4, each.value) + 1}.${var.base_domain}"
   type    = "A"
   ttl     = 300
   records = [each.value]
@@ -1215,7 +1215,7 @@ resource "aws_route53_record" "agent_dns_v4" {
   for_each = toset(module.kube-hetzner.agents_public_ipv4)
 
   zone_id = var.route53_hosted_zone_id
-  name    = "worker-${index(module.kube-hetzner.agents_public_ipv4, each.value) + 1}.${module.kube-hetzner.base_domain}"
+  name    = "worker-${index(module.kube-hetzner.agents_public_ipv4, each.value) + 1}.${var.base_domain}"
   type    = "A"
   ttl     = 300
   records = [each.value]
@@ -1225,7 +1225,7 @@ resource "aws_route53_record" "agent_dns_v6" {
   for_each = toset(module.kube-hetzner.agents_public_ipv6)
 
   zone_id = var.route53_hosted_zone_id
-  name    = "worker-${index(module.kube-hetzner.agents_public_ipv6, each.value) + 1}.${module.kube-hetzner.base_domain}"
+  name    = "worker-${index(module.kube-hetzner.agents_public_ipv6, each.value) + 1}.${var.base_domain}"
   type    = "AAAA"
   ttl     = 300
   records = [each.value]
@@ -1234,7 +1234,7 @@ resource "aws_route53_record" "agent_dns_v6" {
 # Wildcard A record for the cluster
 resource "aws_route53_record" "cluster_wildcard_dns_v4" {
   zone_id = var.route53_hosted_zone_id
-  name    = "*.${module.kube-hetzner.base_domain}"
+  name    = "*.${var.base_domain}"
   type    = "A"
   ttl     = 300
   records = module.kube-hetzner.control_planes_public_ipv4
@@ -1243,7 +1243,7 @@ resource "aws_route53_record" "cluster_wildcard_dns_v4" {
 # Wildcard AAAA record for the cluster
 resource "aws_route53_record" "cluster_wildcard_dns_v6" {
   zone_id = var.route53_hosted_zone_id
-  name    = "*.${module.kube-hetzner.base_domain}"
+  name    = "*.${var.base_domain}"
   type    = "AAAA"
   ttl     = 300
   records = module.kube-hetzner.control_planes_public_ipv6
@@ -1252,7 +1252,7 @@ resource "aws_route53_record" "cluster_wildcard_dns_v6" {
 # Base A record for the cluster
 resource "aws_route53_record" "cluster_base_dns_v4" {
   zone_id = var.route53_hosted_zone_id
-  name    = module.kube-hetzner.base_domain
+  name    = var.base_domain
   type    = "A"
   ttl     = 300
   records = module.kube-hetzner.control_planes_public_ipv4
@@ -1261,7 +1261,7 @@ resource "aws_route53_record" "cluster_base_dns_v4" {
 # Base AAAA record for the cluster
 resource "aws_route53_record" "cluster_base_dns_v6" {
   zone_id = var.route53_hosted_zone_id
-  name    = module.kube-hetzner.base_domain
+  name    = var.base_domain
   type    = "AAAA"
   ttl     = 300
   records = module.kube-hetzner.control_planes_public_ipv6
@@ -1279,12 +1279,12 @@ output "agent_ips" {
 
 output "control_plane_dns_names" {
   description = "The DNS names of the control plane nodes."
-  value       = [for ip in module.kube-hetzner.control_planes_public_ipv4 : "cp-${index(module.kube-hetzner.control_planes_public_ipv4, ip) + 1}.${module.kube-hetzner.base_domain}"]
+  value       = [for ip in module.kube-hetzner.control_planes_public_ipv4 : "cp-${index(module.kube-hetzner.control_planes_public_ipv4, ip) + 1}.${var.base_domain}"]
 }
 
 output "agent_dns_names" {
   description = "The DNS names of the agent nodes."
-  value       = [for ip in module.kube-hetzner.agents_public_ipv4 : "worker-${index(module.kube-hetzner.agents_public_ipv4, ip) + 1}.${module.kube-hetzner.base_domain}"]
+  value       = [for ip in module.kube-hetzner.agents_public_ipv4 : "worker-${index(module.kube-hetzner.agents_public_ipv4, ip) + 1}.${var.base_domain}"]
 }
 
 output "kubeconfig" {
