@@ -1303,6 +1303,11 @@ variable "ssh_public_key" {
   description = "The public SSH key for cluster nodes."
 }
 
+variable "ssh_additional_public_keys" {
+  type        = string
+  description = "Additional SSH keys for cluster nodes."
+}
+
 variable "ssh_private_key" {
   type        = string
   description = "The private SSH key for provisioning."
