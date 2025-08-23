@@ -1191,7 +1191,7 @@ terraform {
   }
 }
 resource "aws_route53_record" "control_plane_dns" {
-  for_each = toset(module.kube-hetzner.control_planes_public_ipv4) 
+  for_each = length(module.kube-hetzner.control_planes_public_ipv4) > 0 ? toset(module.kube-hetzner.control_planes_public_ipv4) : toset([])
 
   zone_id = var.route53_hosted_zone_id
   name    = "cp-${index(module.kube-hetzner.control_planes_public_ipv4, each.value) + 1}.${var.base_domain}"
@@ -1202,7 +1202,7 @@ resource "aws_route53_record" "control_plane_dns" {
 
 # A record for each agent node
 resource "aws_route53_record" "agent_dns_v4" {
-  for_each = toset(module.kube-hetzner.agents_public_ipv4)
+  for_each = length(module.kube-hetzner.agents_public_ipv4) > 0 ? toset(module.kube-hetzner.agents_public_ipv4) : toset([])
 
   zone_id = var.route53_hosted_zone_id
   name    = "worker-${index(module.kube-hetzner.agents_public_ipv4, each.value) + 1}.${var.base_domain}"
@@ -1212,7 +1212,7 @@ resource "aws_route53_record" "agent_dns_v4" {
 }
 
 resource "aws_route53_record" "agent_dns_v6" {
-  for_each = toset(module.kube-hetzner.agents_public_ipv6)
+  for_each = length(module.kube-hetzner.agents_public_ipv6) > 0 ? toset(module.kube-hetzner.agents_public_ipv6) : toset([])
 
   zone_id = var.route53_hosted_zone_id
   name    = "worker-${index(module.kube-hetzner.agents_public_ipv6, each.value) + 1}.${var.base_domain}"
