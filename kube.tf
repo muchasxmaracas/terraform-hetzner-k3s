@@ -1198,7 +1198,7 @@ resource "aws_route53_record" "control_plane_dns" {
 }
 
 # A record for each agent node
-resource "aws_route53_record" "agent_dns" {
+resource "aws_route53_record" "agent_dns_v4" {
   for_each = toset(module.kube-hetzner.agent_ipv4_addresses)
 
   zone_id = var.route53_hosted_zone_id
@@ -1208,7 +1208,7 @@ resource "aws_route53_record" "agent_dns" {
   records = [each.value]
 }
 
-resource "aws_route53_record" "agent_dns" {
+resource "aws_route53_record" "agent_dns_v6" {
   for_each = toset(module.kube-hetzner.agent_ipv6_addresses)
 
   zone_id = var.route53_hosted_zone_id
@@ -1219,7 +1219,7 @@ resource "aws_route53_record" "agent_dns" {
 }
 
 # Wildcard A record for the cluster
-resource "aws_route53_record" "cluster_wildcard_dns" {
+resource "aws_route53_record" "cluster_wildcard_dns_v4" {
   zone_id = var.route53_hosted_zone_id
   name    = "*.${module.kube-hetzner.base_domain}"
   type    = "A"
@@ -1227,7 +1227,8 @@ resource "aws_route53_record" "cluster_wildcard_dns" {
   records = module.kube-hetzner.control_plane_ipv4_addresses
 }
 
-resource "aws_route53_record" "cluster_wildcard_dns" {
+# Wildcard AAAA record for the cluster
+resource "aws_route53_record" "cluster_wildcard_dns_v6" {
   zone_id = var.route53_hosted_zone_id
   name    = "*.${module.kube-hetzner.base_domain}"
   type    = "AAAA"
@@ -1236,7 +1237,7 @@ resource "aws_route53_record" "cluster_wildcard_dns" {
 }
 
 # Base A record for the cluster
-resource "aws_route53_record" "cluster_base_dns" {
+resource "aws_route53_record" "cluster_base_dns_v4" {
   zone_id = var.route53_hosted_zone_id
   name    = module.kube-hetzner.base_domain
   type    = "A"
@@ -1245,7 +1246,7 @@ resource "aws_route53_record" "cluster_base_dns" {
 }
 
 # Base AAAA record for the cluster
-resource "aws_route53_record" "cluster_base_dns" {
+resource "aws_route53_record" "cluster_base_dns_v6" {
   zone_id = var.route53_hosted_zone_id
   name    = module.kube-hetzner.base_domain
   type    = "AAAA"
