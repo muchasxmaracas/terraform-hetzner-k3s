@@ -5,12 +5,39 @@ locals {
 
   # Your Hetzner token can be found in your Project > Security > API Token (Read & Write is required).
   hcloud_token = "xxxxxxxxxxx" # Secret in GitHub Actions Repo Secrets
+
+  # Create a list of numbers from 0 to N-1 for the control planes.
+  # This list is known at plan time.
+  control_plane_keys = range(var.control_plane_count)
+
+  # Create a list of numbers from 0 to N-1 for the agents.
+  # This list is known at plan time.
+  agent_keys = range(var.agent_count)
+
+  # Create a map for the control plane IPs using the static keys.
+  # The keys are known at plan time, while the values (IPs) are not.
+  control_planes_map = {
+    for i in local.control_plane_keys :
+    "cp-${i + 1}" => module.kube-hetzner.control_planes_public_ipv4[i]
+  }
+
+  # Create a map for the agent IPs using the static keys.
+  agents_ipv4_map = {
+    for i in local.agent_keys :
+    "worker-${i + 1}" => module.kube-hetzner.agents_public_ipv4[i]
+  }
+
+  agents_ipv6_map = {
+    for i in local.agent_keys :
+    "worker-${i + 1}" => module.kube-hetzner.agents_public_ipv6[i]
+  }
   }
 
 module "kube-hetzner" {
   providers = {
     hcloud = hcloud
   }
+
 
   hcloud_token = var.hcloud_token != "" ? var.hcloud_token : local.hcloud_token
 
@@ -512,7 +539,7 @@ module "kube-hetzner" {
   # we allow you to add a traefik_values, nginx_values or haproxy_values, see towards the end of this file in the advanced section.
   # After the cluster is deployed, you can always use HelmChartConfig definition to tweak the configuration.
   # If you want to disable both controllers set this to "none"
-  # ingress_controller = "nginx"
+  ingress_controller = "nginx"
   # Namespace in which to deploy the ingress controllers. Defaults to the ingress_controller variable, eg (haproxy, nginx, traefik)
   # ingress_target_namespace = ""
 
@@ -693,42 +720,31 @@ module "kube-hetzner" {
   # kubernetes.
   # https://kubernetes.io/docs/reference/access-authn-authz/authentication/#using-authentication-configuration
   #
-  # authentication_config = <<-EOT
-  #   apiVersion: apiserver.config.k8s.io/v1beta1
-  #   kind: AuthenticationConfiguration
-  #   jwt:
-  #   - issuer:
-  #       url: "https://token.actions.githubusercontent.com"
-  #       audiences:
-  #       - "https://github.com/octo-org"
-  #     claimMappings:
-  #       username:
-  #         claim: sub
-  #         prefix: "gh:"
-  #       groups:
-  #         claim: repository_owner
-  #         prefix: "gh:"
-  #     claimValidationRules:
-  #     - claim: repository
-  #       requiredValue: "octo-org/octo-repo"
-  #     - claim: "repository_visibility"
-  #       requiredValue: "public"
-  #     - claim: "ref"
-  #       requiredValue: "refs/heads/main"
-  #     - claim: "ref_type"
-  #       requiredValue: "branch"
-  #   - issuer:
-  #       url: "https://your.oidc.issuer"
-  #       audiences:
-  #       - "oidc_client_id"
-  #     claimMappings:
-  #       username:
-  #         claim: oidc_username_claim
-  #         prefix: "oidc:"
-  #       groups:
-  #         claim: oidc_groups_claim
-  #         prefix: "oidc:"
-  #   EOT
+  authentication_config = <<-EOT
+    apiVersion: apiserver.config.k8s.io/v1beta1
+    kind: AuthenticationConfiguration
+    jwt:
+    - issuer:
+        url: "https://token.actions.githubusercontent.com"
+        audiences:
+        - "https://github.com/"
+      claimMappings:
+        username:
+          claim: sub
+          prefix: "gh:"
+        groups:
+          claim: repository_owner
+          prefix: "gh:"
+      claimValidationRules:
+      - claim: repository
+        requiredValue: "muchasxmaracas/terraform-hetzner-k3s"
+      - claim: "repository_visibility"
+        requiredValue: "public"
+      - claim: "ref"
+        requiredValue: "refs/heads/main"
+      - claim: "ref_type"
+        requiredValue: "branch"
+    EOT
 
   # Set to true if util-linux breaks on the OS (temporary regression fixed in util-linux v2.41.1).
   k3s_prefer_bundled_bin = true
@@ -1201,31 +1217,30 @@ terraform {
   }
 }
 resource "aws_route53_record" "control_plane_dns" {
-  for_each = toset(module.kube-hetzner.control_planes_public_ipv4) 
+  for_each = local.control_planes_map
 
   zone_id = var.route53_hosted_zone_id
-  name    = "cp-${index(module.kube-hetzner.control_planes_public_ipv4, each.value) + 1}.${var.base_domain}"
+  name    = "${each.key}.${var.base_domain}"
   type    = "A"
   ttl     = 300
   records = [each.value]
 }
 
-# A record for each agent node
 resource "aws_route53_record" "agent_dns_v4" {
-  for_each = toset(module.kube-hetzner.agents_public_ipv4)
+  for_each = local.agents_ipv4_map
 
   zone_id = var.route53_hosted_zone_id
-  name    = "worker-${index(module.kube-hetzner.agents_public_ipv4, each.value) + 1}.${var.base_domain}"
+  name    = "${each.key}.${var.base_domain}"
   type    = "A"
   ttl     = 300
   records = [each.value]
 }
 
 resource "aws_route53_record" "agent_dns_v6" {
-  for_each = toset(module.kube-hetzner.agents_public_ipv6)
+  for_each = local.agents_ipv6_map
 
   zone_id = var.route53_hosted_zone_id
-  name    = "worker-${index(module.kube-hetzner.agents_public_ipv6, each.value) + 1}.${var.base_domain}"
+  name    = "${each.key}.${var.base_domain}"
   type    = "AAAA"
   ttl     = 300
   records = [each.value]
@@ -1265,6 +1280,24 @@ resource "aws_route53_record" "cluster_base_dns_v6" {
   type    = "AAAA"
   ttl     = 300
   records = module.kube-hetzner.control_planes_public_ipv6
+}
+
+# A records for rancher
+resource "aws_route53_record" "rancher_dns_v4" {
+  zone_id = var.route53_hosted_zone_id
+  name    = "rancher.${var.base_domain}"
+  type    = "A"
+  ttl     = 300
+  records = module.kube-hetzner.agents_public_ipv4
+}
+
+# AAAA records for rancher
+resource "aws_route53_record" "rancher_dns_v6" {
+  zone_id = var.route53_hosted_zone_id
+  name    = "rancher.${var.base_domain}"
+  type    = "AAAA"
+  ttl     = 300
+  records = module.kube-hetzner.agents_public_ipv6
 }
 
 output "control_plane_ips" {
@@ -1335,4 +1368,16 @@ variable "hcloud_s3_secret_key" {
   type        = string
   description = "The Hetzner S3 secret key for the Terraform state backend."
   sensitive   = true
+}
+
+variable "control_plane_count" {
+  description = "The number of control plane nodes to provision."
+  type        = number
+  default     = 3 # Example default value
+}
+
+variable "agent_count" {
+  description = "The number of agent (worker) nodes to provision."
+  type        = number
+  default     = 3 # Example default value
 }

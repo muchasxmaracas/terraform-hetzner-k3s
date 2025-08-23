@@ -14,4 +14,5 @@ locals {
 
   # check if the user has set dns servers
   has_dns_servers = length(var.dns_servers) > 0
+
 }
