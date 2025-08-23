@@ -121,9 +121,55 @@ module "kube-hetzner" {
 
   control_plane_nodepools = [
     {
-      name        = "control-plane-fsn1",
+      name        = "control-plane-1",
       server_type = "cx22",
       location    = "fsn1",
+      labels      = [],
+      taints      = [],
+      count       = 1
+      # swap_size   = "2G" # remember to add the suffix, examples: 512M, 1G
+      # zram_size   = "2G" # remember to add the suffix, examples: 512M, 1G
+      # kubelet_args = ["kube-reserved=cpu=250m,memory=1500Mi,ephemeral-storage=1Gi", "system-reserved=cpu=250m,memory=300Mi"]
+
+      # Fine-grained control over placement groups (nodes in the same group are spread over different physical servers, 10 nodes per placement group max):
+      # placement_group = "default"
+
+      # Enable automatic backups via Hetzner (default: false)
+      # backups = true
+
+      # To disable public ips (default: false)
+      # WARNING: If both values are set to "true", your server will only be accessible via a private network. Make sure you have followed
+      # the instructions regarding this type of setup in README.md: "Use only private IPs in your cluster".
+      # disable_ipv4 = true
+      # disable_ipv6 = true
+    },
+    {
+      name        = "control-plane-2",
+      server_type = "cx22",
+      location    = "nbg1",
+      labels      = [],
+      taints      = [],
+      count       = 1
+      # swap_size   = "2G" # remember to add the suffix, examples: 512M, 1G
+      # zram_size   = "2G" # remember to add the suffix, examples: 512M, 1G
+      # kubelet_args = ["kube-reserved=cpu=250m,memory=1500Mi,ephemeral-storage=1Gi", "system-reserved=cpu=250m,memory=300Mi"]
+
+      # Fine-grained control over placement groups (nodes in the same group are spread over different physical servers, 10 nodes per placement group max):
+      # placement_group = "default"
+
+      # Enable automatic backups via Hetzner (default: false)
+      # backups = true
+
+      # To disable public ips (default: false)
+      # WARNING: If both values are set to "true", your server will only be accessible via a private network. Make sure you have followed
+      # the instructions regarding this type of setup in README.md: "Use only private IPs in your cluster".
+      # disable_ipv4 = true
+      # disable_ipv6 = true
+    },
+    {
+      name        = "control-plane-3",
+      server_type = "cx22",
+      location    = "hel1",
       labels      = [],
       taints      = [],
       count       = 1
@@ -147,15 +193,12 @@ module "kube-hetzner" {
 
   agent_nodepools = [
     {
-      name        = "agent-small-1",
-      server_type = "cpx11",
-      location    = "fsn1",
+      name        = "worker-1",
+      server_type = "cx32",
+      location    = "hel1",
       labels      = [],
       taints      = [],
       count       = 1
-      # swap_size   = "2G" # remember to add the suffix, examples: 512M, 1G
-      # zram_size   = "2G" # remember to add the suffix, examples: 512M, 1G
-      # kubelet_args = ["kube-reserved=cpu=50m,memory=300Mi,ephemeral-storage=1Gi", "system-reserved=cpu=250m,memory=300Mi"]
 
       # Fine-grained control over placement groups (nodes in the same group are spread over different physical servers, 10 nodes per placement group max):
       # placement_group = "default"
@@ -164,8 +207,8 @@ module "kube-hetzner" {
       # backups = true
     },
     {
-      name        = "agent-medium-1",
-      server_type = "cx22",
+      name        = "worker-2",
+      server_type = "cx32",
       location    = "nbg1",
       labels      = [],
       taints      = [],
@@ -177,10 +220,10 @@ module "kube-hetzner" {
       # Enable automatic backups via Hetzner (default: false)
       # backups = true
     },
-        {
-      name        = "agent-large-1",
-      server_type = "cpx31",
-      location    = "hel1",
+    {
+      name        = "worker-3",
+      server_type = "cx32",
+      location    = "fsn1",
       labels      = [],
       taints      = [],
       count       = 1
@@ -573,11 +616,11 @@ module "kube-hetzner" {
   # in that case, set this to false to immediately delete pods before upgrading.
   # NOTE: Turning this flag off might lead to downtimes of services (which may be acceptable for your use case)
   # NOTE: This flag takes effect only when system_upgrade_use_drain is set to true.
-  # system_upgrade_enable_eviction = false
+  system_upgrade_enable_eviction = false
 
   # The default is "true" (in HA setup it works wonderfully well, with automatic roll-back to the previous snapshot in case of an issue).
   # IMPORTANT! For non-HA clusters i.e. when the number of control-plane nodes is < 3, you have to turn it off.
-  # automatically_upgrade_os = false
+  automatically_upgrade_os = true
 
   # If you need more control over kured and the reboot behaviour, you can pass additional options to kured.
   # For example limiting reboots to certain timeframes. For all options see: https://kured.dev/docs/configuration/
@@ -726,16 +769,16 @@ module "kube-hetzner" {
 
   # Adding extra firewall rules, like opening a port
   # More info on the format here https://registry.terraform.io/providers/hetznercloud/hcloud/latest/docs/resources/firewall
-  extra_firewall_rules = [
-    {
-      description = "For Gameserver/Agones"
-      direction       = "in"
-      protocol        = "udp"
-      port            = "7000-8000"
-      source_ips      = ["0.0.0.0/0", "::/0"]
-      destination_ips = [] # Won't be used for this rule
-    }
-  ]
+  # extra_firewall_rules = [
+  #   {
+  #     description = "For Gameserver/Agones"
+  #     direction       = "in"
+  #     protocol        = "udp"
+  #     port            = "7000-8000"
+  #     source_ips      = ["0.0.0.0/0", "::/0"]
+  #     destination_ips = [] # Won't be used for this rule
+  #   }
+  # ]
 
   # If you want to configure a different CNI for k3s, use this flag
   # possible values: flannel (Default), calico, and cilium
@@ -1137,8 +1180,8 @@ terraform {
 }
 
 output "kubeconfig" {
-  value     = module.kube-hetzner.kubeconfig
   sensitive = true
+  value     = module.kube-hetzner.kubeconfig
 }
 
 variable "hcloud_token" {
