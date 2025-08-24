@@ -61,7 +61,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install dos2unix
           find .terraform -type f -print0 | xargs -0 dos2unix
-          
+
       - name: Terraform format
         id: fmt
         run: terraform fmt
@@ -109,6 +109,11 @@ jobs:
       - name: Terraform Plan Status
         if: steps.plan.outcome == 'failure'
         run: exit 1
+      
+      - name: Install kubectl
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y kubectl
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
