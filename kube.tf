@@ -1243,12 +1243,9 @@ resource "aws_route53_record" "rancher_api_ipv6" {
 }
 
 output "kubeconfig" {
-  sensitive = true
-  value     = module.kube-hetzner.kubeconfig
-}
-
-output "kubeconfig" {
-  value = ssh_sensitive_resource.kubeconfig.result
+  description = "Kubeconfig with external server address"
+  sensitive   = true
+  value       = local.kubeconfig_external
 }
 
 variable "hcloud_token" {
