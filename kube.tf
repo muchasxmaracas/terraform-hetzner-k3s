@@ -6,38 +6,12 @@ locals {
   # Your Hetzner token can be found in your Project > Security > API Token (Read & Write is required).
   hcloud_token = "xxxxxxxxxxx" # Secret in GitHub Actions Repo Secrets
 
-  # Create a list of numbers from 0 to N-1 for the control planes.
-  # This list is known at plan time.
-  control_plane_keys = range(var.control_plane_count)
-
-  # Create a list of numbers from 0 to N-1 for the agents.
-  # This list is known at plan time.
-  agent_keys = range(var.agent_count)
-
-  # Create a map for the control plane IPs using the static keys.
-  # The keys are known at plan time, while the values (IPs) are not.
-  control_planes_map = {
-    for i in local.control_plane_keys :
-    "cp-${i + 1}" => module.kube-hetzner.control_planes_public_ipv4[i]
-  }
-
-  # Create a map for the agent IPs using the static keys.
-  agents_ipv4_map = {
-    for i in local.agent_keys :
-    "worker-${i + 1}" => module.kube-hetzner.agents_public_ipv4[i]
-  }
-
-  agents_ipv6_map = {
-    for i in local.agent_keys :
-    "worker-${i + 1}" => module.kube-hetzner.agents_public_ipv6[i]
-  }
   }
 
 module "kube-hetzner" {
   providers = {
     hcloud = hcloud
   }
-
 
   hcloud_token = var.hcloud_token != "" ? var.hcloud_token : local.hcloud_token
 
