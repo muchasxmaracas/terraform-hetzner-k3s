@@ -102,27 +102,27 @@ jobs:
 
             const output = `### Terraform CI Summary
 
-      **Format & Style:** ${emoji('${{ steps.fmt-check.outcome }}')} \`${{ steps.fmt-check.outcome }}\`  
-      **Initialization:** ${emoji('${{ steps.init.outcome }}')} \`${{ steps.init.outcome }}\`  
-      **Validation:** ${emoji('${{ steps.validate.outcome }}')} \`${{ steps.validate.outcome }}\`  
-      **Plan:** ${emoji('${{ steps.plan.outcome }}')} \`${{ steps.plan.outcome }}\`  
+            **Format & Style:** ${emoji('${{ steps.fmt-check.outcome }}')} \`${{ steps.fmt-check.outcome }}\`  
+            **Initialization:** ${emoji('${{ steps.init.outcome }}')} \`${{ steps.init.outcome }}\`  
+            **Validation:** ${emoji('${{ steps.validate.outcome }}')} \`${{ steps.validate.outcome }}\`  
+            **Plan:** ${emoji('${{ steps.plan.outcome }}')} \`${{ steps.plan.outcome }}\`  
 
-      <details>
-      <summary>Show Terraform Plan</summary>
+            <details>
+            <summary>Show Terraform Plan</summary>
 
-      \`\`\`
-      ${process.env.PLAN}
-      \`\`\`
-      </details>
+            \`\`\`
+            ${process.env.PLAN}
+            \`\`\`
+            </details>
 
-      *Pushed by @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+            *Pushed by @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
 
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            });
+                  github.rest.issues.createComment({
+                    issue_number: context.issue.number,
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    body: output
+                  });
 
       - name: Terraform Plan Status
         if: steps.plan.outcome == 'failure'
