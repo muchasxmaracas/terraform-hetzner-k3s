@@ -6,8 +6,9 @@ locals {
   # Your Hetzner token can be found in your Project > Security > API Token (Read & Write is required).
   hcloud_token = "xxxxxxxxxxx" # Secret in GitHub Actions Repo Secrets
 
+  kubeconfig_server_address = "api.${var.base_domain}"
   kubeconfig_external = replace(
-    ssh_sensitive_resource.kubeconfig.result,
+    module.kube-hetzner.kubeconfig,
     "127.0.0.1",
     local.kubeconfig_server_address
   )
@@ -1242,8 +1243,9 @@ resource "aws_route53_record" "rancher_api_ipv6" {
 }
 
 output "kubeconfig" {
-  sensitive = true
-  value     = module.kube-hetzner.kubeconfig
+  description = "Kubeconfig with external server address"
+  sensitive   = true
+  value       = local.kubeconfig_external
 }
 
 variable "hcloud_token" {
@@ -1316,6 +1318,6 @@ variable "github_client_secret" {
 
 resource "local_sensitive_file" "kubeconfig" {
   content         = local.kubeconfig_external
-  filename        = "api.${var.base_domain}_kubeconfig.yaml"
+  filename        = "baphomet_kubeconfig.yaml"
   file_permission = "600"
 }
