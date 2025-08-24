@@ -145,7 +145,7 @@ jobs:
         id: kubeconfig
         run: |
           mkdir -p $HOME/.kube
-          terraform output -raw kubeconfig | sed "s/127.0.0.1/api.baphomet.cloud/g" > $HOME/.kube/config
+          terraform output -raw kubeconfig | sed 's|https://localhost:6443|https://api.baphomet.cloud:6443|' > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
 
       - name: Create Route53 secret in Kubernetes
