@@ -8,18 +8,38 @@ spec:
   ingressClassName: traefik
   tls:
   - hosts:
+    - cp-0.baphomet.cloud
     - cp-1.baphomet.cloud
     - cp-2.baphomet.cloud
-    - cp-3.baphomet.cloud
     secretName: cp-baphomet-cloud-cert
-  rules:
-  - host: cp.baphomet.cloud
+rules:
+  - host: cp-0.baphomet.cloud
     http:
       paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: kubernetes
-            port:
-              number: 443
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: kubernetes
+              port:
+                number: 443
+  - host: cp-1.baphomet.cloud
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: kubernetes
+              port:
+                number: 443
+  - host: cp-2.baphomet.cloud
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: kubernetes
+              port:
+                number: 443
