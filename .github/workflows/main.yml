@@ -140,9 +140,25 @@ jobs:
         id: kubeconfig
         if: github.ref == 'refs/heads/main' && github.event_name == 'push' && success()
         run: |
-          terraform output -json kubeconfig | jq -r 'if type=="array" then .[0] else . end' > kubeconfig.yaml
+          set -euo pipefail
 
-          # Store kubeconfig in GitHub env as multiline variable
+          # Try JSON first, fall back to raw
+          if terraform output -json kubeconfig >/tmp/kubeconfig.json 2>/dev/null; then
+            if jq empty /tmp/kubeconfig.json 2>/dev/null; then
+              # Looks like valid JSON
+              jq -r 'if type=="array" then .[0] else . end' /tmp/kubeconfig.json > kubeconfig.yaml
+              echo "Extracted kubeconfig from JSON output"
+            else
+              # Not valid JSON → fallback
+              terraform output -raw kubeconfig > kubeconfig.yaml
+              echo "Extracted kubeconfig as raw output"
+            fi
+          else
+            terraform output -raw kubeconfig > kubeconfig.yaml
+            echo "Extracted kubeconfig as raw output (no JSON available)"
+          fi
+
+          # Export into GitHub env as multiline
           echo "KUBECONFIG_CONTENT<<EOF" >> $GITHUB_ENV
           cat kubeconfig.yaml >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
