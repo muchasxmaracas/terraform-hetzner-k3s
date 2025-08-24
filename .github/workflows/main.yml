@@ -56,6 +56,12 @@ jobs:
             -backend-config=access_key=${{ secrets.HCLOUD_S3_ACCESS_KEY }} \
             -backend-config=secret_key=${{ secrets.HCLOUD_S3_SECRET_KEY }}
       
+      - name: Install dos2unix for fix (https://github.com/kube-hetzner/terraform-hcloud-kube-hetzner/discussions/1180#discussioncomment-10096101)
+        run: |
+          sudo apt-get update
+          sudo apt-get install dos2unix
+          find .terraform -type f -print0 | xargs -0 dos2unix
+          
       - name: Terraform format
         id: fmt
         run: terraform fmt
