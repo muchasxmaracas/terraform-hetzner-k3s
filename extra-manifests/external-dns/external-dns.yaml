@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-dns
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: external-dns
+  template:
+    metadata:
+      labels:
+        app: external-dns
+    spec:
+      serviceAccountName: external-dns
+      containers:
+      - name: external-dns
+        image: registry.k8s.io/external-dns/external-dns:v0.13.3
+        args:
+          - --source=ingress
+          - --domain-filter=baphomet.cloud  # restrict to your domain
+          - --provider=aws
+          - --registry=txt
+          - --txt-owner-id=external-dns
+          - --aws-zone-type=public
+        env:
+          - name: AWS_SHARED_CREDENTIALS_FILE
+            value: /etc/secrets/aws/credentials
+        volumeMounts:
+          - name: aws-credentials
+            mountPath: /etc/secrets/aws
+            readOnly: true
+      volumes:
+        - name: aws-credentials
+          secret:
+            secretName: route53-acme-secret

@@ -6,38 +6,12 @@ locals {
   # Your Hetzner token can be found in your Project > Security > API Token (Read & Write is required).
   hcloud_token = "xxxxxxxxxxx" # Secret in GitHub Actions Repo Secrets
 
-  # Create a list of numbers from 0 to N-1 for the control planes.
-  # This list is known at plan time.
-  control_plane_keys = range(var.control_plane_count)
-
-  # Create a list of numbers from 0 to N-1 for the agents.
-  # This list is known at plan time.
-  agent_keys = range(var.agent_count)
-
-  # Create a map for the control plane IPs using the static keys.
-  # The keys are known at plan time, while the values (IPs) are not.
-  control_planes_map = {
-    for i in local.control_plane_keys :
-    "cp-${i + 1}" => module.kube-hetzner.control_planes_public_ipv4[i]
-  }
-
-  # Create a map for the agent IPs using the static keys.
-  agents_ipv4_map = {
-    for i in local.agent_keys :
-    "worker-${i + 1}" => module.kube-hetzner.agents_public_ipv4[i]
-  }
-
-  agents_ipv6_map = {
-    for i in local.agent_keys :
-    "worker-${i + 1}" => module.kube-hetzner.agents_public_ipv6[i]
-  }
   }
 
 module "kube-hetzner" {
   providers = {
     hcloud = hcloud
   }
-
 
   hcloud_token = var.hcloud_token != "" ? var.hcloud_token : local.hcloud_token
 
@@ -362,7 +336,7 @@ module "kube-hetzner" {
   ### The following values are entirely optional (and can be removed from this if unused)
 
   # You can refine a base domain name to be use in this form of nodename.base_domain for setting the reverse dns inside Hetzner
-  # base_domain = "mycluster.example.com"
+  base_domain = "baphomet.cloud"
 
   # Cluster Autoscaler
   # Providing at least one map for the array enables the cluster autoscaler feature, default is disabled.
@@ -471,13 +445,13 @@ module "kube-hetzner" {
   # Cloudflare's R2 offers 10GB, 10 million reads and 1 million writes per month for free.
   # For proper context, have a look at https://docs.k3s.io/datastore/backup-restore.
   # You also can use additional parameters from https://docs.k3s.io/cli/etcd-snapshot, such as `etc-s3-folder`
-  etcd_s3_backup = {
-    etcd-s3-endpoint        = "baphomet.hel1.your-objectstorage.com"
-    etcd-s3-access-key      = ""
-    etcd-s3-secret-key      = ""
-    etcd-s3-bucket          = "baphomet"
-    # etcd-s3-region          = "<your-s3-bucket-region|usually required for aws>"
-  }
+  # etcd_s3_backup = {
+  #   etcd-s3-endpoint        = "baphomet.hel1.your-objectstorage.com"
+  #   etcd-s3-access-key      = ""
+  #   etcd-s3-secret-key      = ""
+  #   etcd-s3-bucket          = "baphomet"
+  #   etcd-s3-region          = "<your-s3-bucket-region|usually required for aws>"
+  # }
 
   # To enable Hetzner Storage Box support, you can enable csi-driver-smb, default is "false".
   # enable_csi_driver_smb = true
@@ -744,6 +718,9 @@ module "kube-hetzner" {
   #       requiredValue: "branch"
   #   EOT
 
+  # Set to true if util-linux breaks on the OS (temporary regression fixed in util-linux v2.41.1).
+  # k3s_prefer_bundled_bin = true
+
   # Additional flags to pass to the k3s server command (the control plane).
   # k3s_exec_server_args = "--kube-apiserver-arg enable-admission-plugins=PodTolerationRestriction,PodNodeSelector"
 
@@ -855,23 +832,23 @@ module "kube-hetzner" {
 
   # When this is enabled, rather than the first node, all external traffic will be routed via a control-plane loadbalancer, allowing for high availability.
   # The default is false.
-  # use_control_plane_lb = true
+  use_control_plane_lb = true
 
   # When the above use_control_plane_lb is enabled, you can change the lb type for it, the default is "lb11".
-  # control_plane_lb_type = "lb21"
+  control_plane_lb_type = "lb11"
 
   # When the above use_control_plane_lb is enabled, you can change to disable the public interface for control plane load balancer, the default is true.
-  # control_plane_lb_enable_public_interface = false
+  control_plane_lb_enable_public_interface = true
 
   # Let's say you are not using the control plane LB solution above, and still want to have one hostname point to all your control-plane nodes.
   # You could create multiple A records of to let's say cp.cluster.my.org pointing to all of your control-plane nodes ips.
   # In which case, you need to define that hostname in the k3s TLS-SANs config to allow connection through it. It can be hostnames or IP addresses.
-  additional_tls_sans = ["cp.baphomet.cloud"]
+  additional_tls_sans = ["api.baphomet.cloud"]
 
   # If you create a hostname with multiple A records pointing to all of your
   # control-plane nodes ips, you may want to use that hostname in the generated
   # kubeconfig.
-  kubeconfig_server_address = "cp.baphomet.cloud"
+  kubeconfig_server_address = "api.baphomet.cloud"
 
   # lb_hostname Configuration:
   #
@@ -899,7 +876,7 @@ module "kube-hetzner" {
   # For inter-namespace communication, use `.service_name` as per Kubernetes norms.
   #
   # Example:
-  # lb_hostname = "mycluster.domain.com"
+  lb_hostname = "lb.baphomet.cloud"
 
   # You can enable Rancher (installed by Helm behind the scenes) with the following flag, the default is "false".
   # ⚠️ Rancher often doesn't support the latest Kubernetes version. You will need to set initial_k3s_channel to a supported version.
@@ -1166,6 +1143,8 @@ controller:
   # The following is an example, please note that the current indentation inside the EOT is important.
 rancher_values = <<EOT
 ingress:
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
   tls:
     source: "tls-rancher-ingress"
 hostname: "rancher.baphomet.cloud"
@@ -1223,108 +1202,25 @@ terraform {
     }
   }
 }
-resource "aws_route53_record" "control_plane_dns" {
-  for_each = local.control_planes_map
-
+resource "aws_route53_record" "cluster_api_ipv4" {
   zone_id = var.route53_hosted_zone_id
-  name    = "${each.key}.${var.base_domain}"
+  name    = "api.${var.base_domain}"  # the DNS name for your cluster API
   type    = "A"
   ttl     = 300
-  records = [each.value]
+  records = [module.kube-hetzner.lb_control_plane_ipv4]
 }
 
-resource "aws_route53_record" "agent_dns_v4" {
-  for_each = local.agents_ipv4_map
-
+resource "aws_route53_record" "cluster_api_ipv6" {
   zone_id = var.route53_hosted_zone_id
-  name    = "${each.key}.${var.base_domain}"
-  type    = "A"
-  ttl     = 300
-  records = [each.value]
-}
-
-resource "aws_route53_record" "agent_dns_v6" {
-  for_each = local.agents_ipv6_map
-
-  zone_id = var.route53_hosted_zone_id
-  name    = "${each.key}.${var.base_domain}"
+  name    = "api.${var.base_domain}"  # the DNS name for your cluster API
   type    = "AAAA"
   ttl     = 300
-  records = [each.value]
+  records = [module.kube-hetzner.lb_control_plane_ipv6]
 }
 
-# Wildcard A record for the cluster
-resource "aws_route53_record" "cluster_wildcard_dns_v4" {
-  zone_id = var.route53_hosted_zone_id
-  name    = "*.${var.base_domain}"
-  type    = "A"
-  ttl     = 300
-  records = module.kube-hetzner.control_planes_public_ipv4
-}
-
-# Wildcard AAAA record for the cluster
-resource "aws_route53_record" "cluster_wildcard_dns_v6" {
-  zone_id = var.route53_hosted_zone_id
-  name    = "*.${var.base_domain}"
-  type    = "AAAA"
-  ttl     = 300
-  records = module.kube-hetzner.control_planes_public_ipv6
-}
-
-# Base A record for the cluster
-resource "aws_route53_record" "cluster_base_dns_v4" {
-  zone_id = var.route53_hosted_zone_id
-  name    = var.base_domain
-  type    = "A"
-  ttl     = 300
-  records = module.kube-hetzner.control_planes_public_ipv4
-}
-
-# Base AAAA record for the cluster
-resource "aws_route53_record" "cluster_base_dns_v6" {
-  zone_id = var.route53_hosted_zone_id
-  name    = var.base_domain
-  type    = "AAAA"
-  ttl     = 300
-  records = module.kube-hetzner.control_planes_public_ipv6
-}
-
-# A records for rancher
-resource "aws_route53_record" "rancher_dns_v4" {
-  zone_id = var.route53_hosted_zone_id
-  name    = "rancher.${var.base_domain}"
-  type    = "A"
-  ttl     = 300
-  records = module.kube-hetzner.agents_public_ipv4
-}
-
-# AAAA records for rancher
-resource "aws_route53_record" "rancher_dns_v6" {
-  zone_id = var.route53_hosted_zone_id
-  name    = "rancher.${var.base_domain}"
-  type    = "AAAA"
-  ttl     = 300
-  records = module.kube-hetzner.agents_public_ipv6
-}
-
-output "control_plane_ips" {
-  description = "The public IPv4 addresses of the control plane nodes."
-  value       = module.kube-hetzner.control_planes_public_ipv4
-}
-
-output "agent_ips" {
-  description = "The public IPv4 addresses of the agent nodes."
-  value       = module.kube-hetzner.agents_public_ipv4
-}
-
-output "control_plane_dns_names" {
-  description = "The DNS names of the control plane nodes."
-  value       = [for ip in module.kube-hetzner.control_planes_public_ipv4 : "cp-${index(module.kube-hetzner.control_planes_public_ipv4, ip) + 1}.${var.base_domain}"]
-}
-
-output "agent_dns_names" {
-  description = "The DNS names of the agent nodes."
-  value       = [for ip in module.kube-hetzner.agents_public_ipv4 : "worker-${index(module.kube-hetzner.agents_public_ipv4, ip) + 1}.${var.base_domain}"]
+output "lb_dns_name" {
+  description = "The DNS name of the control plane LB."
+  value       = "api.${var.base_domain}"
 }
 
 output "kubeconfig" {

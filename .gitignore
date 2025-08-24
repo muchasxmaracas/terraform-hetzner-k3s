@@ -39,7 +39,6 @@ terraform.rc
 kubeconfig.yaml
 terraform.tfvars
 plans-custom.yaml
-kustomization.yaml
 *kustomization_backup.yaml
 .terraform.lock.hcl
 issue_fix.patch
