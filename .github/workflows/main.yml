@@ -145,18 +145,7 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push' && success()
         run: |
           set -euo pipefail
-
-          terraform output -json kubeconfig > /tmp/kubeconfig.json
-
-          # Check if it's an array
-          if jq 'type=="array"' /tmp/kubeconfig.json | grep true >/dev/null; then
-            # Grab first element of array
-            jq -r '.[0]' /tmp/kubeconfig.json > kubeconfig.yaml
-          else
-            # Already a string, unquote it
-            jq -r '.' /tmp/kubeconfig.json > kubeconfig.yaml
-          fi
-
+          terraform output -raw kubeconfig > kubeconfig.yaml
           echo "KUBECONFIG_CONTENT<<EOF" >> $GITHUB_ENV
           cat kubeconfig.yaml >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
