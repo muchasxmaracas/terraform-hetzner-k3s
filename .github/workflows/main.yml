@@ -142,7 +142,7 @@ jobs:
           terraform apply -auto-approve -input=false
       
       - name: Get kubeconfig
-        id: kubeconfig
+        id: get-kubeconfig
         if: github.ref == 'refs/heads/main' && github.event_name == 'push' && success()
         run: |
           mkdir -p $HOME/.kube
@@ -150,7 +150,7 @@ jobs:
           chmod 600 $HOME/.kube/config
 
       - name: Prepare kubeconfig
-        id: kubeconfig
+        id: prepare-kubeconfig
         env:
           KUBE_API_HOST: "api.baphomet.cloud"
         run: |
