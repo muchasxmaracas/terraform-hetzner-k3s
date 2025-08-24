@@ -22,6 +22,10 @@ env:
   TF_VAR_route53_hosted_zone_id: ${{ secrets.ROUTE53_HOSTED_ZONE_ID }}
   TF_VAR_base_domain: ${{ secrets.BASE_DOMAIN }}
 
+  # GitHub OAuth App variables for Rancher
+  TF_VAR_github_client_id: ${{ secrets.GH_CLIENT_ID }}
+  TF_VAR_github_client_secret: ${{ secrets.GH_CLIENT_SECRET }}
+
 jobs:
   terraform:
     name: "Terraform Infrastructure Change Management"
@@ -142,23 +146,17 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Try JSON first, fall back to raw
-          if terraform output -json kubeconfig >/tmp/kubeconfig.json 2>/dev/null; then
-            if jq empty /tmp/kubeconfig.json 2>/dev/null; then
-              # Looks like valid JSON
-              jq -r 'if type=="array" then .[0] else . end' /tmp/kubeconfig.json > kubeconfig.yaml
-              echo "Extracted kubeconfig from JSON output"
-            else
-              # Not valid JSON → fallback
-              terraform output -raw kubeconfig > kubeconfig.yaml
-              echo "Extracted kubeconfig as raw output"
-            fi
+          terraform output -json kubeconfig > /tmp/kubeconfig.json
+
+          # Check if it's an array
+          if jq 'type=="array"' /tmp/kubeconfig.json | grep true >/dev/null; then
+            # Grab first element of array
+            jq -r '.[0]' /tmp/kubeconfig.json > kubeconfig.yaml
           else
-            terraform output -raw kubeconfig > kubeconfig.yaml
-            echo "Extracted kubeconfig as raw output (no JSON available)"
+            # Already a string, unquote it
+            jq -r '.' /tmp/kubeconfig.json > kubeconfig.yaml
           fi
 
-          # Export into GitHub env as multiline
           echo "KUBECONFIG_CONTENT<<EOF" >> $GITHUB_ENV
           cat kubeconfig.yaml >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
