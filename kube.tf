@@ -1228,12 +1228,20 @@ terraform {
     }
   }
 }
-resource "aws_route53_record" "cluster_api" {
+resource "aws_route53_record" "cluster_api_ipv4" {
   zone_id = var.route53_hosted_zone_id
   name    = "api.${var.base_domain}"  # the DNS name for your cluster API
   type    = "A"
   ttl     = 300
-  records = module.kube-hetzner.lb_control_plane_ipv4
+  records = [module.kube-hetzner.lb_control_plane_ipv4]
+}
+
+resource "aws_route53_record" "cluster_api_ipv6" {
+  zone_id = var.route53_hosted_zone_id
+  name    = "api.${var.base_domain}"  # the DNS name for your cluster API
+  type    = "AAAA"
+  ttl     = 300
+  records = [module.kube-hetzner.lb_control_plane_ipv6]
 }
 
 output "lb_dns_name" {
