@@ -140,8 +140,11 @@ jobs:
         id: kubeconfig
         if: github.ref == 'refs/heads/main' && github.event_name == 'push' && success()
         run: |
+          terraform output -json kubeconfig | jq -r 'if type=="array" then .[0] else . end' > kubeconfig.yaml
+
+          # Store kubeconfig in GitHub env as multiline variable
           echo "KUBECONFIG_CONTENT<<EOF" >> $GITHUB_ENV
-          terraform output -raw kubeconfig >> $GITHUB_ENV
+          cat kubeconfig.yaml >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: Create Route53 secret in Kubernetes
