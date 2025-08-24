@@ -8,7 +8,7 @@ locals {
 
   kubeconfig_server_address = "api.${var.base_domain}"
   kubeconfig_external = replace(
-    module.kube_hetzner.kubeconfig,
+    module.kube-hetzner.kubeconfig,
     "127.0.0.1",
     local.kubeconfig_server_address
   )
