@@ -144,8 +144,14 @@ jobs:
       - name: Get and fix kubeconfig
         run: |
           mkdir -p $HOME/.kube
-          terraform output -raw kubeconfig | yq -i '.clusters[0].cluster.server = "https://api.baphomet.cloud:6443"' - > kubeconfig.yaml
-          mv kubeconfig.yaml $HOME/.kube/config
+          # Save the raw kubeconfig output to a temporary file.
+          terraform output -raw kubeconfig > /tmp/kubeconfig.yaml
+          
+          # Use yq to edit the file in place.
+          yq -i '.clusters[0].cluster.server = "https://api.baphomet.cloud:6443"' /tmp/kubeconfig.yaml
+          
+          # Move the corrected file to the final destination.
+          mv /tmp/kubeconfig.yaml $HOME/.kube/config
           chmod 600 $HOME/.kube/config
         env:
           KUBECONFIG: $HOME/.kube/config
