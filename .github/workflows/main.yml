@@ -112,8 +112,29 @@ jobs:
         run: exit 1
 
       - name: Terraform Apply
+        id: apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           export TF_VAR_hcloud_s3_access_key=${{ secrets.HCLOUD_S3_ACCESS_KEY }}
           export TF_VAR_hcloud_s3_secret_key=${{ secrets.HCLOUD_S3_SECRET_KEY }}
           terraform apply -auto-approve -input=false
+      
+      - name: Get kubeconfig
+        id: kubeconfig
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && success()
+        run: |
+          echo "KUBECONFIG_CONTENT<<EOF" >> $GITHUB_ENV
+          terraform output -raw kubeconfig >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Create Route53 secret in Kubernetes
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && success()
+        env:
+          KUBECONFIG_CONTENT: ${{ env.KUBECONFIG_CONTENT }}
+        run: |
+          mkdir -p $HOME/.kube
+          echo "$KUBECONFIG_CONTENT" > $HOME/.kube/config
+          kubectl -n cert-manager create secret generic route53-acme-secret \
+            --from-literal=aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }} \
+            --from-literal=aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+            --dry-run=client -o yaml | kubectl apply -f -
