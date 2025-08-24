@@ -718,31 +718,31 @@ module "kube-hetzner" {
   # kubernetes.
   # https://kubernetes.io/docs/reference/access-authn-authz/authentication/#using-authentication-configuration
   #
-  authentication_config = <<-EOT
-    apiVersion: apiserver.config.k8s.io/v1beta1
-    kind: AuthenticationConfiguration
-    jwt:
-    - issuer:
-        url: "https://token.actions.githubusercontent.com"
-        audiences:
-        - "https://github.com/"
-      claimMappings:
-        username:
-          claim: sub
-          prefix: "gh:"
-        groups:
-          claim: repository_owner
-          prefix: "gh:"
-      claimValidationRules:
-      - claim: repository
-        requiredValue: "muchasxmaracas/terraform-hetzner-k3s"
-      - claim: "repository_visibility"
-        requiredValue: "public"
-      - claim: "ref"
-        requiredValue: "refs/heads/main"
-      - claim: "ref_type"
-        requiredValue: "branch"
-    EOT
+  # authentication_config = <<-EOT
+  #   apiVersion: apiserver.config.k8s.io/v1beta1
+  #   kind: AuthenticationConfiguration
+  #   jwt:
+  #   - issuer:
+  #       url: "https://token.actions.githubusercontent.com"
+  #       audiences:
+  #       - "https://github.com/"
+  #     claimMappings:
+  #       username:
+  #         claim: sub
+  #         prefix: "gh:"
+  #       groups:
+  #         claim: repository_owner
+  #         prefix: "gh:"
+  #     claimValidationRules:
+  #     - claim: repository
+  #       requiredValue: "muchasxmaracas/terraform-hetzner-k3s"
+  #     - claim: "repository_visibility"
+  #       requiredValue: "public"
+  #     - claim: "ref"
+  #       requiredValue: "refs/heads/main"
+  #     - claim: "ref_type"
+  #       requiredValue: "branch"
+  #   EOT
 
   # Additional flags to pass to the k3s server command (the control plane).
   # k3s_exec_server_args = "--kube-apiserver-arg enable-admission-plugins=PodTolerationRestriction,PodNodeSelector"
