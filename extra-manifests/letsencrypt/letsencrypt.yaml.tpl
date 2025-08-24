@@ -44,10 +44,12 @@ spec:
         dns01:
           route53:
             region: us-east-1
-            accessKeyID: AKIA5CBGTN3X2AYOK5Y4
+            accessKeyIDSecretRef:
+              name: route53-acme-secret
+              key: aws_access_key_id
             secretAccessKeySecretRef:
-              name: acme-route53-secret
-              key: secret-access-key
+              name: route53-acme-secret
+              key: aws_secret_access_key
 ---
 # See doc: https://devops.supportsages.com/kubesecure-mastering-lets-encrypt-ssl-with-kubernetes-and-route53-b6fb54889fb5
 
@@ -72,10 +74,12 @@ spec:
         dns01:
           route53:
             region: us-east-1
-            accessKeyID: AKIA5CBGTN3X2AYOK5Y4
+            accessKeyIDSecretRef:
+              name: route53-acme-secret
+              key: aws_access_key_id
             secretAccessKeySecretRef:
-              name: acme-route53-secret
-              key: secret-access-key
+              name: route53-acme-secret
+              key: aws_secret_access_key
 ---
 # See doc: https://devops.supportsages.com/kubesecure-mastering-lets-encrypt-ssl-with-kubernetes-and-route53-b6fb54889fb5
 
@@ -99,10 +103,12 @@ spec:
         dns01:
           route53:
             region: us-east-1
-            accessKeyID: AKIA5CBGTN3X2AYOK5Y4
+            accessKeyIDSecretRef:
+              name: route53-acme-secret
+              key: aws_access_key_id
             secretAccessKeySecretRef:
-              name: acme-route53-secret
-              key: secret-access-key
+              name: route53-acme-secret
+              key: aws_secret_access_key
 ---
 # See doc: https://devops.supportsages.com/kubesecure-mastering-lets-encrypt-ssl-with-kubernetes-and-route53-b6fb54889fb5
 
@@ -126,10 +132,12 @@ spec:
         dns01:
           route53:
             region: us-east-1
-            accessKeyID: AKIA5CBGTN3X2AYOK5Y4
+            accessKeyIDSecretRef:
+              name: route53-acme-secret
+              key: aws_access_key_id
             secretAccessKeySecretRef:
-              name: acme-route53-secret
-              key: secret-access-key
+              name: route53-acme-secret
+              key: aws_secret_access_key
 ---
 # See doc: https://devops.supportsages.com/kubesecure-mastering-lets-encrypt-ssl-with-kubernetes-and-route53-b6fb54889fb5
 
@@ -153,10 +161,12 @@ spec:
         dns01:
           route53:
             region: us-east-1
-            accessKeyID: AKIA5CBGTN3X2AYOK5Y4
+            accessKeyIDSecretRef:
+              name: route53-acme-secret
+              key: aws_access_key_id
             secretAccessKeySecretRef:
-              name: acme-route53-secret
-              key: secret-access-key
+              name: route53-acme-secret
+              key: aws_secret_access_key
 ---
 # See doc: https://devops.supportsages.com/kubesecure-mastering-lets-encrypt-ssl-with-kubernetes-and-route53-b6fb54889fb5
 
@@ -180,33 +190,9 @@ spec:
         dns01:
           route53:
             region: us-east-1
-            accessKeyID: AKIA5CBGTN3X2AYOK5Y4
+            accessKeyIDSecretRef:
+              name: route53-acme-secret
+              key: aws_access_key_id
             secretAccessKeySecretRef:
-              name: acme-route53-secret
-              key: secret-access-key
----
-apiVersion: networking.k8s.io/v1 
-kind: Ingress
-metadata:
-  name: kube-ingress
-  annotations:
-    cert-manager.io/issuer: "letsencrypt-prod"
-spec:
-  ingressClassName: traefik
-  tls:
-  - hosts:
-    - cp-1.baphomet.cloud
-    - cp-2.baphomet.cloud
-    - cp-3.baphomet.cloud
-    secretName: cp-baphomet-cloud-cert
-  rules:
-  - host: cp.baphomet.cloud
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: kubernetes
-            port:
-              number: 443
+              name: route53-acme-secret
+              key: aws_secret_access_key
