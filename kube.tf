@@ -23,7 +23,7 @@ module "kube-hetzner" {
   source = "kube-hetzner/kube-hetzner/hcloud"
   #    When using the terraform registry as source, you can optionally specify a version number.
   #    See https://registry.terraform.io/modules/kube-hetzner/kube-hetzner/hcloud for the available versions
-  # version = "2.15.3"
+  version = "2.15.3"
   # 2. For local dev, path to the git repo
   # source = "../../kube-hetzner/"
   # 3. If you want to use the latest master branch (see https://developer.hashicorp.com/terraform/language/modules/sources#github), use
@@ -516,7 +516,7 @@ module "kube-hetzner" {
   # ingress_target_namespace = ""
 
   # You can change the number of replicas for selected ingress controller here. The default 0 means autoselecting based on number of agent nodes (1 node = 1 replica, 2 nodes = 2 replicas, 3+ nodes = 3 replicas)
-  # ingress_replica_count = 1
+  ingress_replica_count = 0
 
   # Use the klipperLB (similar to metalLB), instead of the default Hetzner one, that has an advantage of dropping the cost of the setup.
   # Automatically "true" in the case of single node cluster (as it does not make sense to use the Hetzner LB in that situation).
@@ -1220,7 +1220,7 @@ resource "aws_route53_record" "api_ipv4" {
 resource "aws_route53_record" "api_ipv6" {
   zone_id = var.route53_hosted_zone_id
   name    = "api.${var.base_domain}"
-  type    = "A"
+  type    = "AAAA"
   ttl     = 300
   records = [module.kube-hetzner.ingress_public_ipv6]
 }
@@ -1236,7 +1236,7 @@ resource "aws_route53_record" "lb_ipv4" {
 resource "aws_route53_record" "lb_ipv6" {
   zone_id = var.route53_hosted_zone_id
   name    = "lb.${var.base_domain}"
-  type    = "A"
+  type    = "AAAA"
   ttl     = 300
   records = [module.kube-hetzner.ingress_public_ipv6]
 }
@@ -1252,7 +1252,7 @@ resource "aws_route53_record" "rancher_ipv4" {
 resource "aws_route53_record" "rancher_ipv6" {
   zone_id = var.route53_hosted_zone_id
   name    = "rancher.${var.base_domain}"
-  type    = "A"
+  type    = "AAAA"
   ttl     = 300
   records = [module.kube-hetzner.ingress_public_ipv6]
 }
