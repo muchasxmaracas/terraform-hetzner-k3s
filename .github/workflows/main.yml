@@ -10,6 +10,7 @@ on:
       - '**'
 
 env:
+  KUBECONFIG: $HOME/.kube/config
   TF_LOG: INFO
   TF_VAR_hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
   TF_VAR_hcloud_ssh_public_key: ${{ secrets.HCLOUD_SSH_PUBLIC_KEY }}
@@ -144,19 +145,13 @@ jobs:
         id: kubeconfig
         if: github.ref == 'refs/heads/main' && github.event_name == 'push' && success()
         run: |
-          set -euo pipefail
-          terraform output -raw kubeconfig > kubeconfig.yaml
-          echo "KUBECONFIG_CONTENT<<EOF" >> $GITHUB_ENV
-          cat kubeconfig.yaml >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          mkdir -p $HOME/.kube
+          terraform output -raw kubeconfig > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
 
       - name: Create Route53 secret in Kubernetes
         if: github.ref == 'refs/heads/main' && github.event_name == 'push' && success()
-        env:
-          KUBECONFIG_CONTENT: ${{ env.KUBECONFIG_CONTENT }}
         run: |
-          mkdir -p $HOME/.kube
-          echo "$KUBECONFIG_CONTENT" > $HOME/.kube/config
           kubectl -n cert-manager create secret generic route53-acme-secret \
             --from-literal=aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }} \
             --from-literal=aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
