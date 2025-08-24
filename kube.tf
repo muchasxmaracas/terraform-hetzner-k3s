@@ -312,8 +312,8 @@ module "kube-hetzner" {
   # enable_wireguard = true
 
   # * LB location and type, the latter will depend on how much load you want it to handle, see https://www.hetzner.com/cloud/load-balancer
-  #load_balancer_type     = "lb11"
-  #load_balancer_location = "fsn1"
+  load_balancer_type     = "lb11"
+  load_balancer_location = "fsn1"
 
   # Disable IPv6 for the load balancer, the default is false.
   # load_balancer_disable_ipv6 = true
@@ -522,7 +522,7 @@ module "kube-hetzner" {
   # Automatically "true" in the case of single node cluster (as it does not make sense to use the Hetzner LB in that situation).
   # It can work with any ingress controller that you choose to deploy.
   # Please note that because the klipperLB points to all nodes, we automatically allow scheduling on the control plane when it is active.
-  enable_klipper_metal_lb = "true"
+  enable_klipper_metal_lb = "false"
 
   # If you want to configure additional arguments for traefik, enter them here as a list and in the form of traefik CLI arguments; see https://doc.traefik.io/traefik/reference/static-configuration/cli/
   # They are the options that go into the additionalArguments section of the Traefik helm values file.
@@ -832,7 +832,7 @@ module "kube-hetzner" {
 
   # When this is enabled, rather than the first node, all external traffic will be routed via a control-plane loadbalancer, allowing for high availability.
   # The default is false.
-  use_control_plane_lb = true
+  use_control_plane_lb = false
 
   # When the above use_control_plane_lb is enabled, you can change the lb type for it, the default is "lb11".
   control_plane_lb_type = "lb11"
@@ -1081,7 +1081,7 @@ ports:
   # Nginx, all Nginx helm values can be found at https://github.com/kubernetes/ingress-nginx/blob/main/charts/ingress-nginx/values.yaml
   # You can also have a look at https://kubernetes.github.io/ingress-nginx/, to understand how it works, and all the options at your disposal.
   # The following is an example, please note that the current indentation inside the EOT is important.
-  /*   nginx_values = <<EOT
+nginx_values = <<EOT
 controller:
   watchIngressWithoutClass: "true"
   kind: "DaemonSet"
@@ -1092,12 +1092,18 @@ controller:
   service:
     annotations:
       "load-balancer.hetzner.cloud/name": "k3s"
-      "load-balancer.hetzner.cloud/use-private-ip": "true"
+      "load-balancer.hetzner.cloud/use-private-ip": "false"
       "load-balancer.hetzner.cloud/disable-private-ingress": "true"
       "load-balancer.hetzner.cloud/location": "nbg1"
       "load-balancer.hetzner.cloud/type": "lb11"
-      "load-balancer.hetzner.cloud/uses-proxyprotocol": "true"
-  EOT */
+    ports:
+      - name: http
+        port: 80
+        protocol: TCP
+      - name: https
+        port: 443
+        protocol: TCP
+  EOT
 
   # If you want to use a specific HAProxy helm chart version, set it below; otherwise, leave them as-is for the latest versions.
   # haproxy_version = ""
@@ -1203,36 +1209,52 @@ terraform {
   }
 }
 
-resource "aws_route53_record" "cluster_api_ipv4" {
+resource "aws_route53_record" "api_ipv4" {
   zone_id = var.route53_hosted_zone_id
-  name    = "api.${var.base_domain}"  # the DNS name for your cluster API
+  name    = "api.${var.base_domain}"
   type    = "A"
   ttl     = 300
-  records = [module.kube-hetzner.lb_control_plane_ipv4]
+  records = [module.kube-hetzner.ingress_public_ipv4]
 }
 
-resource "aws_route53_record" "cluster_api_ipv6" {
+resource "aws_route53_record" "api_ipv6" {
   zone_id = var.route53_hosted_zone_id
-  name    = "api.${var.base_domain}"  # the DNS name for your cluster API
-  type    = "AAAA"
+  name    = "api.${var.base_domain}"
+  type    = "A"
   ttl     = 300
-  records = [module.kube-hetzner.lb_control_plane_ipv6]
+  records = [module.kube-hetzner.ingress_public_ipv6]
+}
+
+resource "aws_route53_record" "lb_ipv4" {
+  zone_id = var.route53_hosted_zone_id
+  name    = "lb.${var.base_domain}"
+  type    = "A"
+  ttl     = 300
+  records = [module.kube-hetzner.ingress_public_ipv4]
+}
+
+resource "aws_route53_record" "lb_ipv6" {
+  zone_id = var.route53_hosted_zone_id
+  name    = "lb.${var.base_domain}"
+  type    = "A"
+  ttl     = 300
+  records = [module.kube-hetzner.ingress_public_ipv6]
 }
 
 resource "aws_route53_record" "rancher_ipv4" {
   zone_id = var.route53_hosted_zone_id
-  name    = "rancher.${var.base_domain}"  # the DNS name for your cluster API
+  name    = "rancher.${var.base_domain}"
   type    = "A"
   ttl     = 300
-  records = [module.kube-hetzner.lb_control_plane_ipv4]
+  records = [module.kube-hetzner.ingress_public_ipv4]
 }
 
-resource "aws_route53_record" "rancher_api_ipv6" {
+resource "aws_route53_record" "rancher_ipv6" {
   zone_id = var.route53_hosted_zone_id
-  name    = "rancher.${var.base_domain}"  # the DNS name for your cluster API
-  type    = "AAAA"
+  name    = "rancher.${var.base_domain}"
+  type    = "A"
   ttl     = 300
-  records = [module.kube-hetzner.lb_control_plane_ipv6]
+  records = [module.kube-hetzner.ingress_public_ipv6]
 }
 
 variable "hcloud_token" {
