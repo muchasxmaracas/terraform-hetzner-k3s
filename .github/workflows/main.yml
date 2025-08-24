@@ -141,21 +141,21 @@ jobs:
           export TF_VAR_hcloud_s3_secret_key=${{ secrets.HCLOUD_S3_SECRET_KEY }}
           terraform apply -auto-approve -input=false
       
-      - name: Get and fix kubeconfig
-        run: |
-          mkdir -p $HOME/.kube
-          # Get the kubeconfig output as JSON, then use jq to extract the string value
-          # and pipe it to yq to edit the server address.
-          terraform output -json kubeconfig | jq -r '.' | yq '.clusters[0].cluster.server = "https://api.baphomet.cloud:6443"' > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
-        env:
-          KUBECONFIG: $HOME/.kube/config
+      # - name: Get and fix kubeconfig
+      #   run: |
+      #     mkdir -p $HOME/.kube
+      #     # Get the kubeconfig output as JSON, then use jq to extract the string value
+      #     # and pipe it to yq to edit the server address.
+      #     terraform output -json kubeconfig | jq -r '.' | yq '.clusters[0].cluster.server = "https://api.baphomet.cloud:6443"' > $HOME/.kube/config
+      #     chmod 600 $HOME/.kube/config
+      #   env:
+      #     KUBECONFIG: $HOME/.kube/config
 
-      - name: Create Route53 secret in Kubernetes
-        run: |
-          kubectl -n cert-manager create secret generic route53-acme-secret \
-            --from-literal=aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }} \
-            --from-literal=aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-            --dry-run=client -o yaml | kubectl apply -f -
-        env:
-          KUBECONFIG: $HOME/.kube/config
+      # - name: Create Route53 secret in Kubernetes
+      #   run: |
+      #     kubectl -n cert-manager create secret generic route53-acme-secret \
+      #       --from-literal=aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }} \
+      #       --from-literal=aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+      #       --dry-run=client -o yaml | kubectl apply -f -
+      #   env:
+      #     KUBECONFIG: $HOME/.kube/config
