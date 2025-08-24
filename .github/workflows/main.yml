@@ -142,12 +142,22 @@ jobs:
           terraform apply -auto-approve -input=false
       
       - name: Get kubeconfig
-        id: kubeconfig
+        id: get-kubeconfig
         if: github.ref == 'refs/heads/main' && github.event_name == 'push' && success()
         run: |
           mkdir -p $HOME/.kube
           terraform output -raw kubeconfig > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
+
+      - name: Prepare kubeconfig
+        id: prepare-kubeconfig
+        env:
+          KUBE_API_HOST: "api.baphomet.cloud"
+        run: |
+          mkdir -p $HOME/.kube
+          # Replace localhost with LB or public control plane IP
+          echo "${{ steps.get_kubeconfig.outputs.raw }}" | \
+            sed "s/127.0.0.1/${{ env.KUBE_API_HOST }}/g" > $HOME/.kube/config
 
       - name: Create Route53 secret in Kubernetes
         if: github.ref == 'refs/heads/main' && github.event_name == 'push' && success()
