@@ -144,9 +144,21 @@ jobs:
       - name: Get and fix kubeconfig
         run: |
           mkdir -p $HOME/.kube
-          terraform output -raw kubeconfig > kubeconfig.yaml
-          # Use yq to update the server address
+
+          # Save Terraform output as JSON
+          terraform output -json kubeconfig > kubeconfig.json
+
+          # Convert JSON string or array to YAML
+          if jq 'type=="array"' kubeconfig.json | grep true >/dev/null; then
+            jq -r '.[0]' kubeconfig.json > kubeconfig.yaml
+          else
+            jq -r '.' kubeconfig.json > kubeconfig.yaml
+          fi
+
+          # Replace 'localhost' with LB hostname and add https://
           yq -i '.clusters[0].cluster.server = "https://api.baphomet.cloud:6443"' kubeconfig.yaml
+
+          # Move final kubeconfig into place
           mv kubeconfig.yaml $HOME/.kube/config
           chmod 600 $HOME/.kube/config
         env:
