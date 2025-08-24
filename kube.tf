@@ -6,6 +6,12 @@ locals {
   # Your Hetzner token can be found in your Project > Security > API Token (Read & Write is required).
   hcloud_token = "xxxxxxxxxxx" # Secret in GitHub Actions Repo Secrets
 
+  kubeconfig_external = replace(
+    ssh_sensitive_resource.kubeconfig.result,
+    "127.0.0.1",
+    local.kubeconfig_server_address
+  )
+
   }
 
 module "kube-hetzner" {
@@ -1202,6 +1208,7 @@ terraform {
     }
   }
 }
+
 resource "aws_route53_record" "cluster_api_ipv4" {
   zone_id = var.route53_hosted_zone_id
   name    = "api.${var.base_domain}"  # the DNS name for your cluster API
@@ -1218,9 +1225,20 @@ resource "aws_route53_record" "cluster_api_ipv6" {
   records = [module.kube-hetzner.lb_control_plane_ipv6]
 }
 
-output "lb_dns_name" {
-  description = "The DNS name of the control plane LB."
-  value       = "api.${var.base_domain}"
+resource "aws_route53_record" "rancher_ipv4" {
+  zone_id = var.route53_hosted_zone_id
+  name    = "rancher.${var.base_domain}"  # the DNS name for your cluster API
+  type    = "A"
+  ttl     = 300
+  records = [module.kube-hetzner.lb_control_plane_ipv4]
+}
+
+resource "aws_route53_record" "rancher_api_ipv6" {
+  zone_id = var.route53_hosted_zone_id
+  name    = "rancher.${var.base_domain}"  # the DNS name for your cluster API
+  type    = "AAAA"
+  ttl     = 300
+  records = [module.kube-hetzner.lb_control_plane_ipv6]
 }
 
 output "kubeconfig" {
@@ -1294,4 +1312,10 @@ variable "github_client_secret" {
   type        = string
   description = "GitHub OAuth App client secret"
   sensitive   = true
+}
+
+resource "local_sensitive_file" "kubeconfig" {
+  content         = local.kubeconfig_external
+  filename        = "api.${var.base_domain}_kubeconfig.yaml"
+  file_permission = "600"
 }
