@@ -1171,9 +1171,21 @@ ingress:
 hostname: "rancher.baphomet.cloud"
 replicas: 1
 bootstrapPassword: "supermario"
-  EOT 
+auth:
+  github:
+    enabled: true
+    clientId: "${var.github_client_id}"
+    clientSecret: "${var.github_client_secret}"
+    hostname: "github.com"
+    tls: true
+    allowedUsers:
+      - "muchasxmaracas"
+    allowedOrganizations: []
+  EOT
 
 }
+
+
 
 provider "hcloud" {
   token = var.hcloud_token != "" ? var.hcloud_token : local.hcloud_token
@@ -1375,4 +1387,15 @@ variable "agent_count" {
   description = "The number of agent (worker) nodes to provision."
   type        = number
   default     = 2 # Example default value
+}
+
+variable "github_client_id" {
+  type        = string
+  description = "GitHub OAuth App client ID"
+}
+
+variable "github_client_secret" {
+  type        = string
+  description = "GitHub OAuth App client secret"
+  sensitive   = true
 }
