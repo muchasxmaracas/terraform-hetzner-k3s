@@ -1214,7 +1214,7 @@ resource "aws_route53_record" "api_ipv4" {
   name    = "api.${var.base_domain}"
   type    = "A"
   ttl     = 300
-  records = module.kube-hetzner.ingress_public_ipv4
+  records = [module.kube-hetzner.ingress_public_ipv4]
 }
 
 resource "aws_route53_record" "api_ipv6" {
@@ -1222,16 +1222,15 @@ resource "aws_route53_record" "api_ipv6" {
   name    = "api.${var.base_domain}"
   type    = "A"
   ttl     = 300
-  records = module.kube-hetzner.ingress_public_ipv6
+  records = [module.kube-hetzner.ingress_public_ipv6]
 }
-
 
 resource "aws_route53_record" "lb_ipv4" {
   zone_id = var.route53_hosted_zone_id
   name    = "lb.${var.base_domain}"
   type    = "A"
   ttl     = 300
-  records = module.kube-hetzner.ingress_public_ipv4
+  records = [module.kube-hetzner.ingress_public_ipv4]
 }
 
 resource "aws_route53_record" "lb_ipv6" {
@@ -1239,7 +1238,7 @@ resource "aws_route53_record" "lb_ipv6" {
   name    = "lb.${var.base_domain}"
   type    = "A"
   ttl     = 300
-  records = module.kube-hetzner.ingress_public_ipv6
+  records = [module.kube-hetzner.ingress_public_ipv6]
 }
 
 resource "aws_route53_record" "rancher_ipv4" {
@@ -1247,7 +1246,7 @@ resource "aws_route53_record" "rancher_ipv4" {
   name    = "rancher.${var.base_domain}"
   type    = "A"
   ttl     = 300
-  records = module.kube-hetzner.ingress_public_ipv4
+  records = [module.kube-hetzner.ingress_public_ipv4]
 }
 
 resource "aws_route53_record" "rancher_ipv6" {
@@ -1255,7 +1254,7 @@ resource "aws_route53_record" "rancher_ipv6" {
   name    = "rancher.${var.base_domain}"
   type    = "A"
   ttl     = 300
-  records = module.kube-hetzner.ingress_public_ipv6
+  records = [module.kube-hetzner.ingress_public_ipv6]
 }
 
 variable "hcloud_token" {
