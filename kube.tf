@@ -1091,10 +1091,10 @@ controller:
     "use-proxy-protocol": "true"
   service:
     annotations:
-      "load-balancer.hetzner.cloud/name": "k3s"
+      "load-balancer.hetzner.cloud/name": "kube-baphomet-nginx"
       "load-balancer.hetzner.cloud/use-private-ip": "false"
       "load-balancer.hetzner.cloud/disable-private-ingress": "true"
-      "load-balancer.hetzner.cloud/location": "nbg1"
+      "load-balancer.hetzner.cloud/location": "fns1"
       "load-balancer.hetzner.cloud/type": "lb11"
     ports:
       - name: http
