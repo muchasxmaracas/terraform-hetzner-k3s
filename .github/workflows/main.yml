@@ -141,17 +141,22 @@ jobs:
           export TF_VAR_hcloud_s3_secret_key=${{ secrets.HCLOUD_S3_SECRET_KEY }}
           terraform apply -auto-approve -input=false
       
-      - name: Get and prepare kubeconfig
-        id: kubeconfig
+      - name: Get and fix kubeconfig
         run: |
           mkdir -p $HOME/.kube
-          terraform output -raw kubeconfig | sed 's|https://localhost:6443|https://api.baphomet.cloud:6443|' > $HOME/.kube/config
+          terraform output -raw kubeconfig > kubeconfig.yaml
+          # Use yq to update the server address
+          yq -i '.clusters[0].cluster.server = "https://api.baphomet.cloud:6443"' kubeconfig.yaml
+          mv kubeconfig.yaml $HOME/.kube/config
           chmod 600 $HOME/.kube/config
+        env:
+          KUBECONFIG: $HOME/.kube/config
 
       - name: Create Route53 secret in Kubernetes
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && success()
         run: |
           kubectl -n cert-manager create secret generic route53-acme-secret \
             --from-literal=aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }} \
             --from-literal=aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
             --dry-run=client -o yaml | kubectl apply -f -
+        env:
+          KUBECONFIG: $HOME/.kube/config
