@@ -141,17 +141,12 @@ jobs:
           export TF_VAR_hcloud_s3_secret_key=${{ secrets.HCLOUD_S3_SECRET_KEY }}
           terraform apply -auto-approve -input=false
       
-      - name: Get and fix kubeconfig
+     - name: Get and fix kubeconfig
         run: |
           mkdir -p $HOME/.kube
-          # Save the raw kubeconfig output to a temporary file.
-          terraform output -raw kubeconfig > /tmp/kubeconfig.yaml
-          
-          # Use yq to edit the file in place.
-          yq -i '.clusters[0].cluster.server = "https://api.baphomet.cloud:6443"' /tmp/kubeconfig.yaml
-          
-          # Move the corrected file to the final destination.
-          mv /tmp/kubeconfig.yaml $HOME/.kube/config
+          # Get the kubeconfig output as JSON, then use jq to extract the string value
+          # and pipe it to yq to edit the server address.
+          terraform output -json kubeconfig | jq -r '.' | yq '.clusters[0].cluster.server = "https://api.baphomet.cloud:6443"' > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
         env:
           KUBECONFIG: $HOME/.kube/config
