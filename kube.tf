@@ -63,10 +63,10 @@ module "kube-hetzner" {
   # ssh_port = 2222
 
   # * Your ssh public key
-  ssh_public_key             = var.ssh_public_key
+  ssh_public_key             = var.hcloud_ssh_public_key
   # * Your private key must be "ssh_private_key = null" when you want to use ssh-agent for a Yubikey-like device authentication or an SSH key-pair with a passphrase.
   # For more details on SSH see https://github.com/kube-hetzner/kube-hetzner/blob/master/docs/ssh.md
-  ssh_private_key            = var.ssh_private_key
+  ssh_private_key            = var.hcloud_ssh_private_key
   # You can add additional SSH public Keys to grant other team members root access to your cluster nodes.
   ssh_additional_public_keys = var.ssh_additional_public_keys
 
@@ -1326,7 +1326,7 @@ variable "hcloud_token" {
   sensitive   = true
 }
 
-variable "ssh_public_key" {
+variable "hcloud_ssh_public_key" {
   type        = string
   description = "The public SSH key for cluster nodes."
 }
@@ -1337,7 +1337,7 @@ variable "ssh_additional_public_keys" {
   default     = []
 }
 
-variable "ssh_private_key" {
+variable "hcloud_ssh_private_key" {
   type        = string
   description = "The private SSH key for provisioning."
   sensitive   = true

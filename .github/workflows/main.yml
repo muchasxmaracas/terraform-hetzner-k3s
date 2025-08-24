@@ -12,10 +12,12 @@ on:
 env:
   TF_LOG: INFO
   TF_VAR_hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
-  TF_VAR_ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKC6jxq2Lbiwe4cjcB8itTmh4a6ldDR6KVGSM2PvrZwb sandro@DESKTOP-E6TGITL"
+  TF_VAR_hcloud_ssh_public_key: ${{ secrets.HCLOUD_SSH_PUBLIC_KEY }}
+  TF_VAR_hcloud_ssh_private_key: ${{ secrets.HCLOUD_SSH_PRIVATE_KEY }}
   TF_VAR_ssh_additional_public_keys: |
     [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIBYt98G/lAhpNxBLY1JAGZcHSbMTuBJHwFFwMTkt/my sandro@sandros-MacBook-Pro.local"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIBYt98G/lAhpNxBLY1JAGZcHSbMTuBJHwFFwMTkt/my sandro@sandros-MacBook-Pro.local",
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKC6jxq2Lbiwe4cjcB8itTmh4a6ldDR6KVGSM2PvrZwb sandro@DESKTOP-E6TGITL"
     ]
   TF_VAR_route53_hosted_zone_id: ${{ secrets.ROUTE53_HOSTED_ZONE_ID }}
   TF_VAR_base_domain: ${{ secrets.BASE_DOMAIN }}
@@ -79,8 +81,7 @@ jobs:
         run: |
           export TF_VAR_hcloud_s3_access_key=${{ secrets.HCLOUD_S3_ACCESS_KEY }}
           export TF_VAR_hcloud_s3_secret_key=${{ secrets.HCLOUD_S3_SECRET_KEY }}
-          terraform plan \
-            -var "ssh_private_key=${{ secrets.SSH_PRIVATE_KEY }}"
+          terraform plan
         continue-on-error: true
 
       - uses: actions/github-script@v6
@@ -120,5 +121,4 @@ jobs:
         run: |
           export TF_VAR_hcloud_s3_access_key=${{ secrets.HCLOUD_S3_ACCESS_KEY }}
           export TF_VAR_hcloud_s3_secret_key=${{ secrets.HCLOUD_S3_SECRET_KEY }}
-          terraform apply -auto-approve -input=false \
-            -var "ssh_private_key=${{ secrets.SSH_PRIVATE_KEY }}"
+          terraform apply -auto-approve -input=false
