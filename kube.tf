@@ -595,7 +595,7 @@ module "kube-hetzner" {
 
   # If you want to allow non-control-plane workloads to run on the control-plane nodes, set this to "true". The default is "false".
   # True by default for single node clusters, and when enable_klipper_metal_lb is true. In those cases, the value below will be ignored.
-  # allow_scheduling_on_control_plane = true
+  allow_scheduling_on_control_plane = false
 
   # If you want to disable the automatic upgrade of k3s, you can set below to "false".
   # Ideally, keep it on, to always have the latest Kubernetes version, but lock the initial_k3s_channel to a kube major version,
@@ -603,7 +603,7 @@ module "kube-hetzner" {
   # For production use, always use an HA setup with at least 3 control-plane nodes and 2 agents, and keep this on for maximum security.
 
   # The default is "true" (in HA setup i.e. at least 3 control plane nodes & 2 agents, just keep it enabled since it works flawlessly).
-  # automatically_upgrade_k3s = false
+  automatically_upgrade_k3s = true
 
   # By default nodes are drained before k3s upgrade, which will delete and transfer all pods to other nodes.
   # Set this to false to cordon nodes instead, which just prevents scheduling new pods on the node during upgrade
@@ -1166,11 +1166,9 @@ auth:
     allowedUsers:
       - "muchasxmaracas"
     allowedOrganizations: []
-  EOT
+EOT
 
 }
-
-
 
 provider "hcloud" {
   token = var.hcloud_token != "" ? var.hcloud_token : local.hcloud_token
