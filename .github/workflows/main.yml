@@ -141,7 +141,7 @@ jobs:
           export TF_VAR_hcloud_s3_secret_key=${{ secrets.HCLOUD_S3_SECRET_KEY }}
           terraform apply -auto-approve -input=false
       
-     - name: Get and fix kubeconfig
+      - name: Get and fix kubeconfig
         run: |
           mkdir -p $HOME/.kube
           # Get the kubeconfig output as JSON, then use jq to extract the string value
