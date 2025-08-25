@@ -126,6 +126,9 @@ jobs:
           
           # Get the kubeconfig output as a raw string and save it to a temp file
           terraform output -raw kubeconfig > $HOME/.kube/config.tmp
+
+          # DEBUG
+          cat $HOME/.kube/config.tmp
           
           # Use yq to perform an in-place edit, setting the server URL
           yq e '.clusters[0].cluster.server = "https://api.baphomet.cloud:6443"' -i $HOME/.kube/config.tmp
