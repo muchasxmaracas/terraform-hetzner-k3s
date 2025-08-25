@@ -876,7 +876,7 @@ module "kube-hetzner" {
   # For inter-namespace communication, use `.service_name` as per Kubernetes norms.
   #
   # Example:
-  lb_hostname = "lb.baphomet.cloud"
+  # lb_hostname = "lb.baphomet.cloud"
 
   # You can enable Rancher (installed by Helm behind the scenes) with the following flag, the default is "false".
   # ⚠️ Rancher often doesn't support the latest Kubernetes version. You will need to set initial_k3s_channel to a supported version.
@@ -1040,7 +1040,7 @@ service:
   enabled: true
   type: LoadBalancer
   annotations:
-    "load-balancer.hetzner.cloud/name": "kube-baphomet-traefik"
+    "load-balancer.hetzner.cloud/name": "kube-baphomet"
     "load-balancer.hetzner.cloud/protocol": "tcp"
     "load-balancer.hetzner.cloud/use-private-ip": "true"
     "load-balancer.hetzner.cloud/disable-private-ingress": "true"
