@@ -1322,3 +1322,9 @@ variable "github_client_secret" {
   description = "GitHub OAuth App client secret"
   sensitive   = true
 }
+
+output "kubeconfig" {
+  sensitive = true
+  description = "Kubeconfig content with external IP address"
+  value       = module.kube-hetzner.kubeconfig
+}
