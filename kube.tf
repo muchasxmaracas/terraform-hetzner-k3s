@@ -23,7 +23,7 @@ module "kube-hetzner" {
   source = "kube-hetzner/kube-hetzner/hcloud"
   #    When using the terraform registry as source, you can optionally specify a version number.
   #    See https://registry.terraform.io/modules/kube-hetzner/kube-hetzner/hcloud for the available versions
-  version = "2.15.3"
+  version = "2.18.1"
   # 2. For local dev, path to the git repo
   # source = "../../kube-hetzner/"
   # 3. If you want to use the latest master branch (see https://developer.hashicorp.com/terraform/language/modules/sources#github), use
@@ -692,31 +692,31 @@ module "kube-hetzner" {
   # kubernetes.
   # https://kubernetes.io/docs/reference/access-authn-authz/authentication/#using-authentication-configuration
   #
-  # authentication_config = <<-EOT
-  #   apiVersion: apiserver.config.k8s.io/v1beta1
-  #   kind: AuthenticationConfiguration
-  #   jwt:
-  #   - issuer:
-  #       url: "https://token.actions.githubusercontent.com"
-  #       audiences:
-  #       - "https://github.com/"
-  #     claimMappings:
-  #       username:
-  #         claim: sub
-  #         prefix: "gh:"
-  #       groups:
-  #         claim: repository_owner
-  #         prefix: "gh:"
-  #     claimValidationRules:
-  #     - claim: repository
-  #       requiredValue: "muchasxmaracas/terraform-hetzner-k3s"
-  #     - claim: "repository_visibility"
-  #       requiredValue: "public"
-  #     - claim: "ref"
-  #       requiredValue: "refs/heads/main"
-  #     - claim: "ref_type"
-  #       requiredValue: "branch"
-  #   EOT
+  authentication_config = <<-EOT
+    apiVersion: apiserver.config.k8s.io/v1beta1
+    kind: AuthenticationConfiguration
+    jwt:
+    - issuer:
+        url: "https://token.actions.githubusercontent.com"
+        audiences:
+        - "https://github.com/"
+      claimMappings:
+        username:
+          claim: sub
+          prefix: "gh:"
+        groups:
+          claim: repository_owner
+          prefix: "gh:"
+      claimValidationRules:
+      - claim: repository
+        requiredValue: "muchasxmaracas/terraform-hetzner-k3s"
+      - claim: "repository_visibility"
+        requiredValue: "public"
+      - claim: "ref"
+        requiredValue: "refs/heads/main"
+      - claim: "ref_type"
+        requiredValue: "branch"
+    EOT
 
   # Set to true if util-linux breaks on the OS (temporary regression fixed in util-linux v2.41.1).
   # k3s_prefer_bundled_bin = true
@@ -832,7 +832,7 @@ module "kube-hetzner" {
 
   # When this is enabled, rather than the first node, all external traffic will be routed via a control-plane loadbalancer, allowing for high availability.
   # The default is false.
-  use_control_plane_lb = false
+  use_control_plane_lb = true
 
   # When the above use_control_plane_lb is enabled, you can change the lb type for it, the default is "lb11".
   control_plane_lb_type = "lb11"
@@ -1040,7 +1040,8 @@ service:
   enabled: true
   type: LoadBalancer
   annotations:
-    "load-balancer.hetzner.cloud/name": "ingress-lb"
+    "load-balancer.hetzner.cloud/name": "kube-baphomet-traefik"
+    "load-balancer.hetzner.cloud/protocol": "tcp"
     "load-balancer.hetzner.cloud/use-private-ip": "true"
     "load-balancer.hetzner.cloud/disable-private-ingress": "true"
     "load-balancer.hetzner.cloud/location": "nbg1"
@@ -1148,10 +1149,8 @@ ports:
   # The following is an example, please note that the current indentation inside the EOT is important.
 rancher_values = <<EOT
 ingress:
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
   tls:
-    source: "tls-rancher-ingress"
+    source: "letsEncrypt"
 hostname: "rancher.baphomet.cloud"
 replicas: 1
 bootstrapPassword: "supermario"
@@ -1211,7 +1210,7 @@ resource "aws_route53_record" "api_ipv4" {
   name    = "api.${var.base_domain}"
   type    = "A"
   ttl     = 300
-  records = [module.kube-hetzner.ingress_public_ipv4]
+  records = module.kube-hetzner.lb_control_plane_ipv4
 }
 
 resource "aws_route53_record" "api_ipv6" {
@@ -1219,7 +1218,7 @@ resource "aws_route53_record" "api_ipv6" {
   name    = "api.${var.base_domain}"
   type    = "AAAA"
   ttl     = 300
-  records = [module.kube-hetzner.ingress_public_ipv6]
+  records = module.kube-hetzner.lb_control_plane_ipv6
 }
 
 resource "aws_route53_record" "lb_ipv4" {
@@ -1302,13 +1301,13 @@ variable "hcloud_s3_secret_key" {
 variable "control_plane_count" {
   description = "The number of control plane nodes to provision."
   type        = number
-  default     = 3 # Example default value
+  default     = 3
 }
 
 variable "agent_count" {
   description = "The number of agent (worker) nodes to provision."
   type        = number
-  default     = 2 # Example default value
+  default     = 3
 }
 
 variable "github_client_id" {
