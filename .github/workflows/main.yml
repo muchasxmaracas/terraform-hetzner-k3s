@@ -142,6 +142,7 @@ jobs:
           terraform apply -auto-approve -input=false
       
       - name: Get and fix kubeconfig
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           # Use 'terraform output -raw' to get the plain YAML string
           # and save it directly to a temporary file.
@@ -157,6 +158,7 @@ jobs:
           chmod 600 $HOME/.kube/config
 
       - name: Create Route53 secret in Kubernetes
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           kubectl -n cert-manager create secret generic route53-acme-secret \
             --from-literal=aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }} \

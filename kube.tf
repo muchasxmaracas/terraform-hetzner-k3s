@@ -210,7 +210,7 @@ module "kube-hetzner" {
     },
     {
       name        = "worker-1",
-      server_type = "cx32",
+      server_type = "cx22",
       location    = "nbg1",
       labels      = [],
       taints      = [],
@@ -224,7 +224,7 @@ module "kube-hetzner" {
     },
     {
       name        = "worker-2",
-      server_type = "cx32",
+      server_type = "cx22",
       location    = "fsn1",
       labels      = [],
       taints      = [],
