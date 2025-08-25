@@ -3,11 +3,11 @@ name: "Terraform Infrastructure Change Management Pipeline with GitHub Actions"
 on:
   push:
     branches:
-      - '**'
+      - 'main'
 
   pull_request:
     branches:
-      - '**'
+      - 'main'
 
 env:
   KUBECONFIG: $HOME/.kube/config
@@ -22,10 +22,10 @@ env:
     ]
   TF_VAR_route53_hosted_zone_id: ${{ secrets.ROUTE53_HOSTED_ZONE_ID }}
   TF_VAR_base_domain: ${{ secrets.BASE_DOMAIN }}
-
-  # GitHub OAuth App variables for Rancher
   TF_VAR_github_client_id: ${{ secrets.GH_CLIENT_ID }}
   TF_VAR_github_client_secret: ${{ secrets.GH_CLIENT_SECRET }}
+  TF_VAR_hcloud_s3_access_key: ${{ secrets.HCLOUD_S3_ACCESS_KEY }}
+  TF_VAR_hcloud_s3_secret_key: ${{ secrets.HCLOUD_S3_SECRET_KEY }}
 
 jobs:
   terraform:
@@ -41,16 +41,16 @@ jobs:
         working-directory: ./
 
     steps:
-      - name: Checkout the repository to the runner
-        uses: actions/checkout@v2
+      - name: Checkout the repository
+        uses: actions/checkout@v4
 
-      - name: Setup Terraform with specified version on the runner
+      - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.13.0
-      
+          terraform_version: 1.8.0
+
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -58,36 +58,23 @@ jobs:
 
       - name: Terraform init
         id: init
-        run: |
-          terraform init \
-            -backend-config=access_key=${{ secrets.HCLOUD_S3_ACCESS_KEY }} \
-            -backend-config=secret_key=${{ secrets.HCLOUD_S3_SECRET_KEY }}
+        run: terraform init -backend-config=access_key=${{ env.TF_VAR_hcloud_s3_access_key }} -backend-config=secret_key=${{ env.TF_VAR_hcloud_s3_secret_key }}
       
-      - name: Install dos2unix for fix (https://github.com/kube-hetzner/terraform-hcloud-kube-hetzner/discussions/1180#discussioncomment-10096101)
+      - name: Install dos2unix
         run: |
           sudo apt-get update
-          sudo apt-get install dos2unix
+          sudo apt-get install -y dos2unix
           find .terraform -type f -print0 | xargs -0 dos2unix
 
-      - name: Terraform format
-        id: fmt
-        run: terraform fmt
-
-      - name: Terraform format check
-        id: fmt-check
-        run: terraform fmt -check
-
-      - name: Terraform validate
-        id: validate
-        run: terraform validate
+      - name: Run Terraform checks
+        id: checks
+        run: |
+          terraform fmt && terraform fmt -check
+          terraform validate
 
       - name: Terraform plan
         id: plan
-        run: |
-          export TF_VAR_hcloud_s3_access_key=${{ secrets.HCLOUD_S3_ACCESS_KEY }}
-          export TF_VAR_hcloud_s3_secret_key=${{ secrets.HCLOUD_S3_SECRET_KEY }}
-          terraform plan
-        continue-on-error: true
+        run: terraform plan
 
       - uses: actions/github-script@v6
         if: github.event_name == 'pull_request'
@@ -95,7 +82,6 @@ jobs:
           PLAN: ${{ steps.plan.outputs.stdout }}
         with:
           script: |
-            // Helper to convert Terraform step outcome to emoji
             const emoji = (status) => {
               switch(status) {
                 case 'success': return '✅';
@@ -104,59 +90,43 @@ jobs:
                 default: return '❓';
               }
             };
-
+            
             const output = `### Terraform CI Summary
-
-            **Format & Style:** ${emoji('${{ steps.fmt-check.outcome }}')} \`${{ steps.fmt-check.outcome }}\`  
-            **Initialization:** ${emoji('${{ steps.init.outcome }}')} \`${{ steps.init.outcome }}\`  
-            **Validation:** ${emoji('${{ steps.validate.outcome }}')} \`${{ steps.validate.outcome }}\`  
-            **Plan:** ${emoji('${{ steps.plan.outcome }}')} \`${{ steps.plan.outcome }}\`  
-
+            
+            **Initialization:** ${emoji('${{ steps.init.outcome }}')} \`${{ steps.init.outcome }}\` 
+            **Validation & Format:** ${emoji('${{ steps.checks.outcome }}')} \`${{ steps.checks.outcome }}\` 
+            **Plan:** ${emoji('${{ steps.plan.outcome }}')} \`${{ steps.plan.outcome }}\` 
+            
             <details>
             <summary>Show Terraform Plan</summary>
-
+            
             \`\`\`
             ${process.env.PLAN}
             \`\`\`
             </details>
-
+            
             *Pushed by @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
-
-                  github.rest.issues.createComment({
-                    issue_number: context.issue.number,
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    body: output
-                  });
-
-      - name: Terraform Plan Status
-        if: steps.plan.outcome == 'failure'
-        run: exit 1
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
 
       - name: Terraform Apply
-        id: apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: |
-          export TF_VAR_hcloud_s3_access_key=${{ secrets.HCLOUD_S3_ACCESS_KEY }}
-          export TF_VAR_hcloud_s3_secret_key=${{ secrets.HCLOUD_S3_SECRET_KEY }}
-          terraform apply -auto-approve -input=false
+        run: terraform apply -auto-approve -input=false
       
       - name: Get and fix kubeconfig
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          # Use 'terraform output -raw' to get the plain YAML string
-          # and save it directly to a temporary file.
           mkdir -p $HOME/.kube
           terraform output -raw kubeconfig > $HOME/.kube/config.tmp
-          
-          # Use yq to edit the temporary file in-place with the correct server address.
-          # The '-i' flag tells yq to edit the file directly.
           yq e '.clusters[0].cluster.server = "https://api.baphomet.cloud:6443"' -i $HOME/.kube/config.tmp
-          
-          # Move the corrected file to its final location.
           mv $HOME/.kube/config.tmp $HOME/.kube/config
           chmod 600 $HOME/.kube/config
-
+          
       - name: Create Route53 secret in Kubernetes
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
@@ -164,5 +134,3 @@ jobs:
             --from-literal=aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }} \
             --from-literal=aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
             --dry-run=client -o yaml | kubectl apply -f -
-        env:
-          KUBECONFIG: $HOME/.kube/config
