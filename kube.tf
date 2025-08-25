@@ -511,7 +511,7 @@ module "kube-hetzner" {
   # we allow you to add a traefik_values, nginx_values or haproxy_values, see towards the end of this file in the advanced section.
   # After the cluster is deployed, you can always use HelmChartConfig definition to tweak the configuration.
   # If you want to disable both controllers set this to "none"
-  ingress_controller = "nginx"
+  ingress_controller = "traefik"
   # Namespace in which to deploy the ingress controllers. Defaults to the ingress_controller variable, eg (haproxy, nginx, traefik)
   # ingress_target_namespace = ""
 
@@ -1032,7 +1032,7 @@ persistence:
 
   # Traefik, all Traefik helm values can be found at https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml
   # The following is an example, please note that the current indentation inside the EOT is important.
-  /*   traefik_values = <<EOT
+traefik_values = <<EOT
 deployment:
   replicas: 1
 globalArguments: []
@@ -1040,13 +1040,12 @@ service:
   enabled: true
   type: LoadBalancer
   annotations:
-    "load-balancer.hetzner.cloud/name": "k3s"
+    "load-balancer.hetzner.cloud/name": "ingress-lb"
     "load-balancer.hetzner.cloud/use-private-ip": "true"
     "load-balancer.hetzner.cloud/disable-private-ingress": "true"
     "load-balancer.hetzner.cloud/location": "nbg1"
     "load-balancer.hetzner.cloud/type": "lb11"
     "load-balancer.hetzner.cloud/uses-proxyprotocol": "true"
-
 ports:
   web:
     redirections:
@@ -1072,7 +1071,7 @@ ports:
       trustedIPs:
         - 127.0.0.1/32
         - 10.0.0.0/8
-  EOT */
+  EOT
 
   # If you want to use a specific Nginx helm chart version, set it below; otherwise, leave them as-is for the latest versions.
   # See https://github.com/kubernetes/ingress-nginx?tab=readme-ov-file#supported-versions-table for the available versions.
@@ -1081,29 +1080,29 @@ ports:
   # Nginx, all Nginx helm values can be found at https://github.com/kubernetes/ingress-nginx/blob/main/charts/ingress-nginx/values.yaml
   # You can also have a look at https://kubernetes.github.io/ingress-nginx/, to understand how it works, and all the options at your disposal.
   # The following is an example, please note that the current indentation inside the EOT is important.
-nginx_values = <<EOT
-controller:
-  watchIngressWithoutClass: "true"
-  kind: "DaemonSet"
-  config:
-    "use-forwarded-headers": "true"
-    "compute-full-forwarded-for": "true"
-    "use-proxy-protocol": "true"
-  service:
-    annotations:
-      "load-balancer.hetzner.cloud/name": "kube-baphomet-nginx"
-      "load-balancer.hetzner.cloud/use-private-ip": "false"
-      "load-balancer.hetzner.cloud/disable-private-ingress": "true"
-      "load-balancer.hetzner.cloud/location": "fns1"
-      "load-balancer.hetzner.cloud/type": "lb11"
-    ports:
-      - name: http
-        port: 80
-        protocol: TCP
-      - name: https
-        port: 443
-        protocol: TCP
-  EOT
+# nginx_values = <<EOT
+# controller:
+#   watchIngressWithoutClass: "true"
+#   kind: "DaemonSet"
+#   config:
+#     "use-forwarded-headers": "true"
+#     "compute-full-forwarded-for": "true"
+#     "use-proxy-protocol": "true"
+#   service:
+#     annotations:
+#       "load-balancer.hetzner.cloud/name": "kube-baphomet-nginx"
+#       "load-balancer.hetzner.cloud/use-private-ip": "false"
+#       "load-balancer.hetzner.cloud/disable-private-ingress": "true"
+#       "load-balancer.hetzner.cloud/location": "fns1"
+#       "load-balancer.hetzner.cloud/type": "lb11"
+#     ports:
+#       - name: http
+#         port: 80
+#         protocol: TCP
+#       - name: https
+#         port: 443
+#         protocol: TCP
+#   EOT
 
   # If you want to use a specific HAProxy helm chart version, set it below; otherwise, leave them as-is for the latest versions.
   # haproxy_version = ""
