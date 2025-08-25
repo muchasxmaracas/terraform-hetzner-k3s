@@ -832,7 +832,7 @@ module "kube-hetzner" {
 
   # When this is enabled, rather than the first node, all external traffic will be routed via a control-plane loadbalancer, allowing for high availability.
   # The default is false.
-  use_control_plane_lb = true
+  use_control_plane_lb = false
 
   # When the above use_control_plane_lb is enabled, you can change the lb type for it, the default is "lb11".
   control_plane_lb_type = "lb11"
@@ -1210,7 +1210,8 @@ resource "aws_route53_record" "api_ipv4" {
   name    = "api.${var.base_domain}"
   type    = "A"
   ttl     = 300
-  records = module.kube-hetzner.lb_control_plane_ipv4
+  # Correct attribute name
+  records = module.kube-hetzner.control_planes_public_ipv4
 }
 
 resource "aws_route53_record" "api_ipv6" {
@@ -1218,7 +1219,8 @@ resource "aws_route53_record" "api_ipv6" {
   name    = "api.${var.base_domain}"
   type    = "AAAA"
   ttl     = 300
-  records = module.kube-hetzner.lb_control_plane_ipv6
+  # Correct attribute name
+  records = module.kube-hetzner.control_planes_public_ipv6
 }
 
 resource "aws_route53_record" "lb_ipv4" {
