@@ -125,7 +125,7 @@ jobs:
           mkdir -p $HOME/.kube
           
           # Get the kubeconfig output as a raw string and save it to a temp file
-          terraform output -raw kubeconfig > $HOME/.kube/config.tmp
+          terraform output kubeconfig_file > $HOME/.kube/config.tmp
 
           # DEBUG
           cat $HOME/.kube/config.tmp
