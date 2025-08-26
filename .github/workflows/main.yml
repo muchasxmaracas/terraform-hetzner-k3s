@@ -128,7 +128,7 @@ jobs:
           terraform output -raw kubeconfig > $HOME/.kube/config
 
           # DEBUG
-          # cat $HOME/.kube/config.tmp
+          cat $HOME/.kube/config
           
           # Set correct file permissions
           chmod 600 $HOME/.kube/config
@@ -136,6 +136,7 @@ jobs:
       - name: Create Route53 secret in Kubernetes
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
+          export KUBECONFIG=$HOME/.kube/config
           kubectl -n cert-manager create secret generic route53-acme-secret \
             --from-literal=aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }} \
             --from-literal=aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
