@@ -118,17 +118,15 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false
       
-      - name: Get and fix kubeconfig
+      - name: Get kubeconfig
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           # Create the directory for the kubeconfig
           mkdir -p $HOME/.kube
           
-          # Get the kubeconfig output as a raw string and save it to a temp file
-          terraform output -raw kubeconfig > $HOME/.kube/config
-
-          # DEBUG
-          cat $HOME/.kube/config
+          # Use the -json flag to get the structured data, use jq to get the raw string
+          # from the first element of the array, and save it to the config file.
+          terraform output -json kubeconfig | jq -r '.[0]' > $HOME/.kube/config
           
           # Set correct file permissions
           chmod 600 $HOME/.kube/config
