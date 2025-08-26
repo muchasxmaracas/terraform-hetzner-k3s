@@ -128,7 +128,7 @@ jobs:
           terraform output -raw kubeconfig > $HOME/.kube/config
 
           # DEBUG
-          # cat $HOME/.kube/config
+          cat $HOME/.kube/config
           
           # Set correct file permissions
           chmod 600 $HOME/.kube/config
