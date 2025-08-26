@@ -125,16 +125,10 @@ jobs:
           mkdir -p $HOME/.kube
           
           # Get the kubeconfig output as a raw string and save it to a temp file
-          terraform output -raw kubeconfig > $HOME/.kube/config.tmp
+          terraform output -raw kubeconfig > $HOME/.kube/config
 
           # DEBUG
-          cat $HOME/.kube/config.tmp
-          
-          # Use yq to perform an in-place edit, setting the server URL
-          yq e '.clusters[0].cluster.server = "https://api.baphomet.cloud:6443"' -i $HOME/.kube/config.tmp
-          
-          # Move the corrected file to its final location
-          mv $HOME/.kube/config.tmp $HOME/.kube/config
+          # cat $HOME/.kube/config.tmp
           
           # Set correct file permissions
           chmod 600 $HOME/.kube/config
