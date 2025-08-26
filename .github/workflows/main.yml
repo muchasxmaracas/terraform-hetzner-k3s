@@ -126,7 +126,7 @@ jobs:
           
           # Use the -json flag to get the structured data, use jq to get the raw string
           # from the first element of the array, and save it to the config file.
-          terraform output -json kubeconfig | jq -r '.[0]' > $HOME/.kube/config
+          terraform output -json kubeconfig > $HOME/.kube/config
           
           # Set correct file permissions
           chmod 600 $HOME/.kube/config
@@ -137,5 +137,4 @@ jobs:
           export KUBECONFIG=$HOME/.kube/config
           kubectl -n cert-manager create secret generic route53-acme-secret \
             --from-literal=aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }} \
-            --from-literal=aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-            --dry-run=client -o yaml | kubectl apply -f -
+            --from-literal=aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}
