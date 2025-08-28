@@ -121,7 +121,6 @@ jobs:
               body: output
             });
 
-
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false
@@ -129,18 +128,18 @@ jobs:
       - name: Get kubeconfig
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          # Create the directory for the kubeconfig
+
           mkdir -p $HOME/.kube
           
-          terraform output --raw kubeconfig | sed -n '/^apiVersion:/,$p' > $HOME/.kube/config          
-          # Set correct file permissions
+          # Use 'sed' to filter lines, starting with the first line that matches "apiVersion"
+          # and also remove any hidden blank lines from the output.
+          terraform output --raw kubeconfig | sed -n '/^apiVersion:/,$p' | sed '/^$/d' > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
 
           # DEBUG
           echo "-------------------------------xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx------------------------------"
           cat $HOME/.kube/config
           echo "-------------------------------xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx------------------------------"
-
 
       - name: Create Route53 secret in Kubernetes
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
