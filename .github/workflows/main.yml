@@ -138,8 +138,11 @@ jobs:
           # Set correct file permissions
           chmod 600 $HOME/.kube/config
 
-    # DEBUG
-    cat $HOME/.kube/config        
+          # DEBUG
+          echo "-------------------------------xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx------------------------------"
+          cat $HOME/.kube/config
+          echo "-------------------------------xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx------------------------------"
+
 
       - name: Create Route53 secret in Kubernetes
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
