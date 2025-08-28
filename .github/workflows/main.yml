@@ -32,7 +32,7 @@ env:
 jobs:
   terraform:
     name: "Terraform Infrastructure Change Management"
-    runs-on: tenki-standard-small-2c-4g
+    runs-on: tenki-standard-autoscale
     permissions:
       contents: read
       issues: write
@@ -129,15 +129,17 @@ jobs:
       - name: Get kubeconfig
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-
           # Create the directory for the kubeconfig
           mkdir -p $HOME/.kube
           
-          # Get the raw kubeconfig output and redirect stderr to /dev/null
-          terraform output --raw kubeconfig 2> /dev/null > $HOME/.kube/config
+          # Use 'sed' to filter out log lines that don't look like YAML
+          terraform output --raw kubeconfig | sed '/^[[:space:]]*[a-zA-Z0-9_-]\+:/!d' > $HOME/.kube/config
           
           # Set correct file permissions
-          chmod 600 $HOME/.kube/config          
+          chmod 600 $HOME/.kube/config
+
+    # DEBUG
+    cat $HOME/.kube/config        
 
       - name: Create Route53 secret in Kubernetes
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
