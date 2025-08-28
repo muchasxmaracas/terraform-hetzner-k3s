@@ -130,10 +130,9 @@ jobs:
         run: |
 
           mkdir -p $HOME/.kube
-          
-          # Use 'sed' to filter lines, starting with the first line that matches "apiVersion"
-          # and also remove any hidden blank lines from the output.
-          terraform output --raw kubeconfig | sed -n '/^apiVersion:/,$p' | sed '/^$/d' > $HOME/.kube/config
+
+          # Use 'sed' to extract only the YAML block and remove blank lines
+          terraform output --raw kubeconfig | sed -n '/^apiVersion:/,$p' | sed '/^\s*$/d' > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
 
           # DEBUG
