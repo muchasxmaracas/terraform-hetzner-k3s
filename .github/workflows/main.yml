@@ -132,7 +132,9 @@ jobs:
           mkdir -p $HOME/.kube
 
           # Extract the YAML block, remove blank lines, and then remove carriage return characters
-          terraform output --raw kubeconfig | sed -n '/^apiVersion:/,$p' | sed '/^\s*$/d' | tr -d '\r' > $HOME/.kube/config          chmod 600 $HOME/.kube/config
+          terraform output --raw kubeconfig | sed -n '/^apiVersion:/,$p' | sed '/^\s*$/d' | tr -d '\r' > $HOME/.kube/config
+          
+          chmod 600 $HOME/.kube/config
 
           # DEBUG
           echo "-------------------------------xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx------------------------------"
