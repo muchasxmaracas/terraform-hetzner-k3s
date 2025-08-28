@@ -124,9 +124,7 @@ jobs:
           # Create the directory for the kubeconfig
           mkdir -p $HOME/.kube
           
-          # Use the -json flag to get the structured data, use jq to get the raw string
-          # from the first element of the array, and save it to the config file.
-          terraform output -json kubeconfig > $HOME/.kube/config
+          terraform output --raw kubeconfig > $HOME/.kube/config
           
           # Set correct file permissions
           chmod 600 $HOME/.kube/config
