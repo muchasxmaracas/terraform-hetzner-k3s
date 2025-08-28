@@ -137,6 +137,9 @@ jobs:
           
           # Set correct file permissions
           chmod 600 $HOME/.kube/config
+
+          # DEBUG
+          cat $HOME/.kube/config
           
 
       - name: Create Route53 secret in Kubernetes
@@ -146,4 +149,4 @@ jobs:
           export KUBECONFIG=$HOME/.kube/config
           kubectl -n cert-manager create secret generic route53-acme-secret \
             --from-literal=aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }} \
-            --from-literal=aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            --from-literal=aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}
