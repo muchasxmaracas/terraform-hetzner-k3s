@@ -16,10 +16,12 @@ env:
   TF_VAR_hcloud_ssh_public_key: ${{ secrets.HCLOUD_SSH_PUBLIC_KEY }}
   TF_VAR_hcloud_ssh_private_key: ${{ secrets.HCLOUD_SSH_PRIVATE_KEY }}
   TF_VAR_ssh_additional_public_keys: |
+
     [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIBYt98G/lAhpNxBLY1JAGZcHSbMTuBJHwFFwMTkt/my sandro@sandros-MacBook-Pro.local",
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKC6jxq2Lbiwe4cjcB8itTmh4a6ldDR6KVGSM2PvrZwb sandro@DESKTOP-E6TGITL"
     ]
+
   TF_VAR_route53_hosted_zone_id: ${{ secrets.ROUTE53_HOSTED_ZONE_ID }}
   TF_VAR_base_domain: ${{ secrets.BASE_DOMAIN }}
   TF_VAR_github_client_id: ${{ secrets.GH_CLIENT_ID }}
@@ -30,7 +32,7 @@ env:
 jobs:
   terraform:
     name: "Terraform Infrastructure Change Management"
-    runs-on: ubuntu-latest
+    runs-on: tenki-standard-small-2c-4g
     permissions:
       contents: read
       issues: write
@@ -59,18 +61,22 @@ jobs:
       - name: Terraform init
         id: init
         run: terraform init -backend-config=access_key=${{ env.TF_VAR_hcloud_s3_access_key }} -backend-config=secret_key=${{ env.TF_VAR_hcloud_s3_secret_key }}
-      
+
       - name: Install dos2unix
         run: |
+
           sudo apt-get update
           sudo apt-get install -y dos2unix
           find .terraform -type f -print0 | xargs -0 dos2unix
 
+
       - name: Run Terraform checks
         id: checks
         run: |
+
           terraform fmt && terraform fmt -check
           terraform validate
+
 
       - name: Terraform plan
         id: plan
@@ -82,6 +88,7 @@ jobs:
           PLAN: ${{ steps.plan.outputs.stdout }}
         with:
           script: |
+
             const emoji = (status) => {
               switch(status) {
                 case 'success': return '✅';
@@ -114,13 +121,15 @@ jobs:
               body: output
             });
 
+
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false
-      
+
       - name: Get kubeconfig
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
+
           # Create the directory for the kubeconfig
           mkdir -p $HOME/.kube
           
@@ -129,10 +138,12 @@ jobs:
           # Set correct file permissions
           chmod 600 $HOME/.kube/config
           
+
       - name: Create Route53 secret in Kubernetes
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
+
           export KUBECONFIG=$HOME/.kube/config
           kubectl -n cert-manager create secret generic route53-acme-secret \
             --from-literal=aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }} \
-            --from-literal=aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            --from-literal=aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}
