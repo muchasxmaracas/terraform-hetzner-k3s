@@ -11,7 +11,7 @@ on:
 
 env:
   KUBECONFIG: $HOME/.kube/config
-  TF_LOG: INFO
+  TF_LOG: ERROR
   TF_VAR_hcloud_token: ${{ secrets.HCLOUD_TOKEN }}
   TF_VAR_hcloud_ssh_public_key: ${{ secrets.HCLOUD_SSH_PUBLIC_KEY }}
   TF_VAR_hcloud_ssh_private_key: ${{ secrets.HCLOUD_SSH_PRIVATE_KEY }}
@@ -132,7 +132,7 @@ jobs:
           mkdir -p $HOME/.kube
 
           # Extract the YAML block, remove blank lines, and then remove carriage return characters
-          terraform output --raw kubeconfig | sed -n '/^apiVersion:/,$p' | sed '/^\s*$/d' | tr -d '\r' > $HOME/.kube/config
+          terraform output --raw kubeconfig > $HOME/.kube/config
           
           chmod 600 $HOME/.kube/config
 
