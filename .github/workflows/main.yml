@@ -132,9 +132,7 @@ jobs:
           # Create the directory for the kubeconfig
           mkdir -p $HOME/.kube
           
-          # Use 'sed' to filter out log lines that don't look like YAML
-          terraform output --raw kubeconfig | sed '/^[[:space:]]*[a-zA-Z0-9_-]\+:/!d' > $HOME/.kube/config
-          
+          terraform output --raw kubeconfig | sed -n '/^apiVersion:/,$p' > $HOME/.kube/config          
           # Set correct file permissions
           chmod 600 $HOME/.kube/config
 
