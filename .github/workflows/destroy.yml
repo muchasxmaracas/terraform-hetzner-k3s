@@ -12,7 +12,7 @@ jobs:
   terraform_destroy:
     name: "Terraform Destroy"
     if: github.event.inputs.confirm_destroy == 'destroy'
-    runs-on: ubuntu-latest
+    runs-on: tenki-standard-small-2c-4g
     permissions:
       contents: read
     defaults:
@@ -41,7 +41,7 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.13.0
-      
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
