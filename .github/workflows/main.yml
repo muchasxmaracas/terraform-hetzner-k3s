@@ -142,9 +142,7 @@ jobs:
         run: |
 
           export KUBECONFIG=$HOME/.kube/config
-          kubectl -n cert-manager create secret generic route53-acme-secret \
-            --from-literal=aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }} \
-            --from-literal=aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          kubectl apply -f kubernetes-manifests/init-secret/route53-secret.yaml
 
       - name: Deploy Kubernetes Manifests
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
