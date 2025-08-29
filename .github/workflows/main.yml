@@ -136,13 +136,33 @@ jobs:
           
           chmod 600 $HOME/.kube/config
 
-
-      - name: Create Route53 secret in Kubernetes
+      - name: Create or update Route53 secret in Kubernetes
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-
           export KUBECONFIG=$HOME/.kube/config
-          kubectl apply -f kubernetes-manifests/init-secret/route53-secret.yaml
+          
+          # Properly Base64 encode the secrets into temporary variables.
+          # The -n flag prevents a trailing newline, and -w 0 disables line wrapping.
+          AWS_ACCESS_KEY_ID_B64=$(echo -n "${{ secrets.AWS_ACCESS_KEY_ID }}" | base64 -w 0)
+          AWS_SECRET_ACCESS_KEY_B64=$(echo -n "${{ secrets.AWS_SECRET_ACCESS_KEY }}" | base64 -w 0)
+
+          # Create the secret YAML file with the properly encoded values.
+          # The EOF block ensures the shell substitutes the variables correctly.
+          cat <<EOF > init-secret/route53-secret.yaml
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: route53-acme-secret
+            namespace: cert-manager
+          type: Opaque
+          data:
+            aws_access_key_id: $AWS_ACCESS_KEY_ID_B64
+            aws_secret_access_key: $AWS_SECRET_ACCESS_KEY_B64
+          EOF
+
+          # Use `kubectl apply` to create or update the secret.
+          # This command is idempotent and will not fail if the secret already exists.
+          kubectl apply -f init-secret/route53-secret.yaml
 
       - name: Deploy Kubernetes Manifests
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
