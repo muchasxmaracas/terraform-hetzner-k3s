@@ -167,6 +167,8 @@ jobs:
       - name: Deploy Kubernetes Manifests
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
+          export KUBECONFIG=$HOME/.kube/config
+
           # Use the kubectl that's already configured from the previous step
           echo "Deploying Kubernetes manifests from the kubernetes-manifests/ directory..."
           
