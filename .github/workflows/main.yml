@@ -132,18 +132,19 @@ jobs:
           mkdir -p $HOME/.kube
 
           # Extract the YAML block, remove blank lines, and then remove carriage return characters
-          terraform output --raw kubeconfig > $HOME/.kube/config
+          terraform output -json kubeconfig > $HOME/.kube/config
           
           chmod 600 $HOME/.kube/config
+
+      - name: Create Route53 secret in Kubernetes
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
 
           # DEBUG
           echo "-------------------------------xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx------------------------------"
           cat $HOME/.kube/config
           echo "-------------------------------xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx------------------------------"
 
-      - name: Create Route53 secret in Kubernetes
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: |
           export KUBECONFIG=$HOME/.kube/config
           kubectl -n cert-manager create secret generic route53-acme-secret \
             --from-literal=aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }} \
