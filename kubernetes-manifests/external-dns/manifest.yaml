@@ -75,3 +75,23 @@ spec:
         - name: aws-credentials
           secret:
             secretName: route53-acme-secret
+---
+# This ExternalSecret resource instructs the External Secrets Operator
+# to sync the `route53-acme-secret` from the `cert-manager` namespace
+# to your target namespace. The new secret will have the same name.
+
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: route53-acme-secret-sync
+  namespace: kube-system
+spec:
+  refreshInterval: 1m # How often to check for secret updates
+  secretStoreRef:
+    name: kubernetes-secret-store # Reference to the ClusterSecretStore
+    kind: ClusterSecretStore
+  target:
+    name: route53-acme-secret # The name of the new secret in this namespace
+  data:
+    - remoteRef:
+        key: route53-acme-secret
