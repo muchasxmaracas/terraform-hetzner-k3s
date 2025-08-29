@@ -168,6 +168,13 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           export KUBECONFIG=$HOME/.kube/config
+          
+          # Prepare external-dns CRDs
+          # Apply CRDs from the official source
+          kubectl apply -f https://raw.githubusercontent.com/external-secrets/external-secrets/main/config/crd/bases/external-secrets.io_clustersecretstores.yaml
+
+          # Wait for the CRD to be registered by the cluster
+          sleep 10s
 
           # Use the kubectl that's already configured from the previous step
           echo "Deploying Kubernetes manifests from the kubernetes-manifests/ directory..."
