@@ -133,7 +133,7 @@ jobs:
 
           # Get the full JSON output and use jq to extract the raw string value of kubeconfig,
           # then pipe the result to yq to perform the update on the YAML string.
-          terraform output -json kubeconfig | jq -r '.' > $HOME/.kube/config
+          terraform output -json kubeconfig | jq -r '.' | yq '.clusters[0].cluster.server = "https://api.baphomet.cloud:6443"' > $HOME/.kube/config
                     
           chmod 600 $HOME/.kube/config
 
