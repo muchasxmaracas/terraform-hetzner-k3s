@@ -171,8 +171,8 @@ jobs:
 
           # Prepare external-dns CRDs
           # Apply CRDs from the official source
-          kubectl apply -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/external-secrets.io_clustersecretstores.yaml
-          kubectl apply -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/external-secrets.io_externalsecrets.yaml
+          kubectl apply -f https://github.com/external-secrets/external-secrets/blob/v0.19.2/config/crds/bases/external-secrets.io_clustersecretstores.yaml
+          kubectl apply -f https://github.com/external-secrets/external-secrets/blob/v0.19.2/config/crds/bases/external-secrets.io_externalsecrets.yaml
           # Wait for the CRD to be registered by the cluster
           sleep 10s
 
