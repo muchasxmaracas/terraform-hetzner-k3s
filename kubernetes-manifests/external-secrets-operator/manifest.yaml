@@ -1,0 +1,108 @@
+# This manifest contains all the Kubernetes resources required to deploy
+# the External Secrets Operator. This operator is what enables the
+# synchronization of secrets from a single source to other namespaces.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: external-secrets
+  labels:
+    name: external-secrets
+---
+# The Service Account for the External Secrets controller.
+# This is the identity that the controller will use within the cluster.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: external-secrets
+  namespace: external-secrets
+---
+# The ClusterRole defines the permissions that the controller needs.
+# This grants the controller the ability to read and manage secrets and
+# ExternalSecret resources across all namespaces in the cluster.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: external-secrets-controller
+rules:
+  - apiGroups: [""]
+    resources: ["secrets", "serviceaccounts"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["external-secrets.io"]
+    resources: ["externalsecrets", "externalsecrets/status", "secretstores", "clustersecretstores"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+---
+# The ClusterRoleBinding links the Service Account to the ClusterRole,
+# granting the controller the defined permissions.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: external-secrets-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: external-secrets-controller
+subjects:
+  - kind: ServiceAccount
+    name: external-secrets
+    namespace: external-secrets
+---
+# This is the main deployment for the External Secrets controller.
+# It runs a single replica that watches for ExternalSecret resources.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-secrets
+  namespace: external-secrets
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: external-secrets
+  template:
+    metadata:
+      labels:
+        app: external-secrets
+    spec:
+      serviceAccountName: external-secrets
+      containers:
+      - name: external-secrets
+        image: ghcr.io/external-secrets/external-secrets:v0.9.1
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        volumeMounts:
+          - name: tmp
+            mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+# This ClusterSecretStore configures the External Secrets Operator to
+# use the Kubernetes provider. This allows the operator to read secrets
+# from other namespaces within the same cluster.
+
+apiVersion: external-secrets.io/v1beta1
+kind: ClusterSecretStore
+metadata:
+  name: kubernetes-secret-store
+spec:
+  provider:
+    kubernetes:
+      # The namespace where the source secret resides.
+      # The External Secrets Operator will look for secrets here.
+      secret:
+        namespace: cert-manager
+      # The service account that the operator will use to access the secret.
+      auth:
+        serviceAccountRef:
+          name: external-secrets
+          namespace: external-secrets
