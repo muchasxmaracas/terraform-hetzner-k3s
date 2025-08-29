@@ -2,7 +2,7 @@
 # use the Kubernetes provider. This allows the operator to read secrets
 # from other namespaces within the same cluster.
 
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ClusterSecretStore
 metadata:
   name: kubernetes-secret-store

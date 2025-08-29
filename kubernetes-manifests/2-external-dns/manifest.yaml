@@ -80,7 +80,7 @@ spec:
 # to sync the `route53-acme-secret` from the `cert-manager` namespace
 # to your target namespace. The new secret will have the same name.
 
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: route53-acme-secret-sync
