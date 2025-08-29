@@ -145,3 +145,17 @@ jobs:
           kubectl -n cert-manager create secret generic route53-acme-secret \
             --from-literal=aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }} \
             --from-literal=aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Deploy Kubernetes Manifests
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          # Use the kubectl that's already configured from the previous step
+          echo "Deploying Kubernetes manifests from the kubernetes-manifests/ directory..."
+          
+          # Iterate through each subdirectory and apply Kustomize.
+          for dir in kubernetes-manifests/*/; do
+            if [ -f "${dir}kustomization.yaml" ]; then
+              echo "Applying manifests from: ${dir}"
+              kubectl apply -k "${dir}"
+            fi
+          done

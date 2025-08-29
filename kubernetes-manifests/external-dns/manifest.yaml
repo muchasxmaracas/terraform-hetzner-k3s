@@ -1,0 +1,77 @@
+# This manifest defines the complete Kubernetes configuration for the
+# External DNS deployment using static credentials. It includes a Service Account,
+# Cluster Role, Cluster Role Binding, and the Deployment itself.
+
+# Service Account and RBAC resources are required for External DNS to
+# get information about your cluster's services and ingresses.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: external-dns
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: external-dns
+rules:
+  - apiGroups: [""]
+    resources: ["services", "endpoints", "pods"]
+    verbs: ["get", "watch", "list"]
+  - apiGroups: ["extensions", "networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "watch", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: external-dns-viewer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: external-dns
+subjects:
+  - kind: ServiceAccount
+    name: external-dns
+    namespace: kube-system
+---
+# This is the main External DNS deployment.
+# It uses the Service Account defined above and mounts the
+# AWS credentials from a Kubernetes Secret.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-dns
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: external-dns
+  template:
+    metadata:
+      labels:
+        app: external-dns
+    spec:
+      serviceAccountName: external-dns
+      containers:
+      - name: external-dns
+        image: registry.k8s.io/external-dns/external-dns:v0.13.3
+        args:
+          - --source=ingress
+          - --domain-filter=baphomet.cloud  # restrict to your domain
+          - --provider=aws
+          - --registry=txt
+          - --txt-owner-id=external-dns
+          - --aws-zone-type=public
+        env:
+          - name: AWS_SHARED_CREDENTIALS_FILE
+            value: /etc/secrets/aws/credentials
+        volumeMounts:
+          - name: aws-credentials
+            mountPath: /etc/secrets/aws
+            readOnly: true
+      volumes:
+        - name: aws-credentials
+          secret:
+            secretName: route53-acme-secret
