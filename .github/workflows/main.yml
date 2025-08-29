@@ -141,11 +141,6 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
 
-          # DEBUG
-          echo "-------------------------------xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx------------------------------"
-          cat $HOME/.kube/config
-          echo "-------------------------------xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx------------------------------"
-
           export KUBECONFIG=$HOME/.kube/config
           kubectl -n cert-manager create secret generic route53-acme-secret \
             --from-literal=aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }} \
