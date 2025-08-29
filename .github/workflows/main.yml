@@ -125,16 +125,17 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false
 
-      - name: Get kubeconfig
+        - name: Copy kubeconfig to home directory
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
 
           mkdir -p $HOME/.kube
-
-          # Redirect stderr to null so only the clean JSON output is piped.
-          terraform output -json kubeconfig 2> /dev/null | jq -r '."kubeconfig"' | yq '.clusters[0].cluster.server = "https://api.baphomet.cloud:6443"' > $HOME/.kube/config
+          
+          # Move the kubeconfig file created by Terraform to the standard kubectl location.
+          mv kube-baphomet_kubeconfig.yaml $HOME/.kube/config
           
           chmod 600 $HOME/.kube/config
+
 
       - name: Create Route53 secret in Kubernetes
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
