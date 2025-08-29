@@ -153,6 +153,7 @@ jobs:
           kind: Secret
           metadata:
             name: route53-acme-secret
+            reflector.v1.k8s.emberstack.com/reflection-allowed: "true" # annotation needed for reflector operator to be able to sync to other namespaces
             namespace: cert-manager
           type: Opaque
           data:
@@ -168,7 +169,9 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           export KUBECONFIG=$HOME/.kube/config
-          
+
+          echo "Before this pipeline can succeed, "
+
           # Use the kubectl that's already configured from the previous step
           echo "Deploying Kubernetes manifests from the kubernetes-manifests/ directory..."
           

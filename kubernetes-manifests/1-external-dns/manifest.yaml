@@ -76,22 +76,13 @@ spec:
           secret:
             secretName: route53-acme-secret
 ---
-# This ExternalSecret resource instructs the External Secrets Operator
-# to sync the `route53-acme-secret` from the `cert-manager` namespace
-# to your target namespace. The new secret will have the same name.
-
-apiVersion: external-secrets.io/v1
-kind: ExternalSecret
+apiVersion: v1
+kind: Secret
 metadata:
-  name: route53-acme-secret-sync
-  namespace: kube-system
-spec:
-  refreshInterval: 1m # How often to check for secret updates
-  secretStoreRef:
-    name: kubernetes-secret-store # Reference to the ClusterSecretStore
-    kind: ClusterSecretStore
-  target:
-    name: route53-acme-secret # The name of the new secret in this namespace
-  data:
-    - remoteRef:
-        key: route53-acme-secret
+  name: route53-acme-secret
+     reflector.v1.k8s.emberstack.com/reflects: "cert-manager/route53-acme-secret" # annotation needed for reflector operator to be able to sync to other namespaces
+  namespace: external-dns
+type: Opaque
+data:
+  aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
