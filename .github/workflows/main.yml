@@ -125,7 +125,7 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false
 
-        - name: Copy kubeconfig to home directory
+      - name: Copy kubeconfig to home directory
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
 
