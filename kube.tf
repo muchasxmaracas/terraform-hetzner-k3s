@@ -1222,6 +1222,8 @@ terraform {
 resource "hcloud_storage_box" "storage-box-1" {
   name     = "storage-box-1"
   location = "fsn1"
+  storage_box_type = "bx21"
+  password         = var.hcloud_storage_box_password
 }
 
 import {
@@ -1415,4 +1417,10 @@ output "kubeconfig" {
   sensitive = true
   description = "Kubeconfig content with external IP address"
   value       = module.kube-hetzner.kubeconfig
+}
+
+variable "hcloud_storage_box_password" {
+  type        = string
+  description = "Password for the Hetzner Storage Box, provided via TF_VAR_hcloud_storage_box_password"
+  sensitive   = true
 }

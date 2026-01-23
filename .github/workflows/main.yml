@@ -28,6 +28,8 @@ env:
   TF_VAR_github_client_secret: ${{ secrets.GH_CLIENT_SECRET }}
   TF_VAR_hcloud_s3_access_key: ${{ secrets.HCLOUD_S3_ACCESS_KEY }}
   TF_VAR_hcloud_s3_secret_key: ${{ secrets.HCLOUD_S3_SECRET_KEY }}
+  TF_VAR_hcloud_storage_box_password: ${{ secrets.HCLOUD_STORAGE_BOX_PASSWORD }}
+
 
 jobs:
   terraform:
