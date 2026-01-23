@@ -510,14 +510,14 @@ module "kube-hetzner" {
 
   # If you want to use a specific Hetzner CCM and CSI version, set them below; otherwise, leave them as-is for the latest versions.
   # See https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases for the available versions.
-  # hetzner_ccm_version = ""
+  hetzner_ccm_version = "v1.20.0"
 
   # See https://github.com/hetznercloud/csi-driver/releases for the available versions.
-  # hetzner_csi_version = ""
+  hetzner_csi_version = "v2.18.3"
 
   # If you want to specify the Kured version, set it below - otherwise it'll use the latest version available.
   # See https://github.com/kubereboot/kured/releases for the available versions.
-  # kured_version = ""
+  kured_version = "1.21.0"
 
   # Default is "traefik".
   # If you want to enable the Nginx (https://kubernetes.github.io/ingress-nginx/) or HAProxy ingress controller instead of Traefik, you can set this to "nginx" or "haproxy".
