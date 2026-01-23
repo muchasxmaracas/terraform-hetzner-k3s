@@ -28,6 +28,8 @@ env:
   TF_VAR_github_client_secret: ${{ secrets.GH_CLIENT_SECRET }}
   TF_VAR_hcloud_s3_access_key: ${{ secrets.HCLOUD_S3_ACCESS_KEY }}
   TF_VAR_hcloud_s3_secret_key: ${{ secrets.HCLOUD_S3_SECRET_KEY }}
+  TF_VAR_hcloud_storage_box_password: ${{ secrets.HCLOUD_STORAGE_BOX_PASSWORD }}
+
 
 jobs:
   terraform:
@@ -123,62 +125,4 @@ jobs:
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve -input=false
-
-      - name: Copy kubeconfig to home directory
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: |
-
-          mkdir -p $HOME/.kube
-          
-          # Move the kubeconfig file created by Terraform to the standard kubectl location.
-          mv kube-baphomet_kubeconfig.yaml $HOME/.kube/config
-          
-          chmod 600 $HOME/.kube/config
-
-      - name: Create or update Route53 secret in Kubernetes
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: |
-          export KUBECONFIG=$HOME/.kube/config
-          
-          # Properly Base64 encode the secrets into temporary variables.
-          # The -n flag prevents a trailing newline, and -w 0 disables line wrapping.
-          AWS_ACCESS_KEY_ID_B64=$(echo -n "${{ secrets.AWS_ACCESS_KEY_ID }}" | base64 -w 0)
-          AWS_SECRET_ACCESS_KEY_B64=$(echo -n "${{ secrets.AWS_SECRET_ACCESS_KEY }}" | base64 -w 0)
-
-          # Create the secret YAML file with the properly encoded values.
-          # The EOF block ensures the shell substitutes the variables correctly.
-          cat <<EOF > init-secret/route53-secret.yaml
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: route53-acme-secret
-            reflector.v1.k8s.emberstack.com/reflection-allowed: "true" # annotation needed for reflector operator to be able to sync to other namespaces
-            namespace: cert-manager
-          type: Opaque
-          data:
-            aws_access_key_id: $AWS_ACCESS_KEY_ID_B64
-            aws_secret_access_key: $AWS_SECRET_ACCESS_KEY_B64
-          EOF
-
-          # Use `kubectl apply` to create or update the secret.
-          # This command is idempotent and will not fail if the secret already exists.
-          kubectl apply -f init-secret/route53-secret.yaml
-
-      - name: Deploy Kubernetes Manifests
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: |
-          export KUBECONFIG=$HOME/.kube/config
-
-          echo "Before this pipeline can succeed, "
-
-          # Use the kubectl that's already configured from the previous step
-          echo "Deploying Kubernetes manifests from the kubernetes-manifests/ directory..."
-          
-          # Iterate through each subdirectory and apply Kustomize.
-          for dir in kubernetes-manifests/*/; do
-            if [ -f "${dir}kustomization.yaml" ]; then
-              echo "Applying manifests from: ${dir}"
-              kubectl apply -k "${dir}"
-            fi
-          done
+        run: terraform apply -auto-approve -input=false       

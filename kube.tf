@@ -210,7 +210,7 @@ module "kube-hetzner" {
     },
     {
       name        = "worker-1",
-      server_type = "cx22",
+      server_type = "cx43",
       location    = "nbg1",
       labels      = [],
       taints      = [],
@@ -226,6 +226,20 @@ module "kube-hetzner" {
       name        = "worker-2",
       server_type = "cx22",
       location    = "fsn1",
+      labels      = [],
+      taints      = [],
+      count       = 1
+
+      # Fine-grained control over placement groups (nodes in the same group are spread over different physical servers, 10 nodes per placement group max):
+      # placement_group = "workers"
+
+      # Enable automatic backups via Hetzner (default: false)
+      # backups = true
+    },
+        {
+      name        = "worker-3",
+      server_type = "cx23",
+      location    = "hel1",
       labels      = [],
       taints      = [],
       count       = 1
@@ -1205,6 +1219,18 @@ terraform {
   }
 }
 
+resource "hcloud_storage_box" "storage-box-1" {
+  name     = "storage-box-1"
+  location = "fsn1"
+  storage_box_type = "bx21"
+  password         = var.hcloud_storage_box_password
+}
+
+import {
+  to = hcloud_storage_box.storage-box-1
+  id = "508510" # Replace with your actual Storage Box ID
+}
+
 resource "aws_route53_record" "api_ipv4" {
   zone_id = var.route53_hosted_zone_id
   name    = "api.${var.base_domain}"
@@ -1250,6 +1276,70 @@ resource "aws_route53_record" "rancher_ipv4" {
 resource "aws_route53_record" "rancher_ipv6" {
   zone_id = var.route53_hosted_zone_id
   name    = "rancher.${var.base_domain}"
+  type    = "AAAA"
+  ttl     = 300
+  records = [module.kube-hetzner.ingress_public_ipv6]
+}
+
+resource "aws_route53_record" "argocd_ipv4" {
+  zone_id = var.route53_hosted_zone_id
+  name    = "argocd.${var.base_domain}"
+  type    = "A"
+  ttl     = 300
+  records = [module.kube-hetzner.ingress_public_ipv4]
+}
+
+resource "aws_route53_record" "argocd_ipv6" {
+  zone_id = var.route53_hosted_zone_id
+  name    = "argocd.${var.base_domain}"
+  type    = "AAAA"
+  ttl     = 300
+  records = [module.kube-hetzner.ingress_public_ipv6]
+}
+
+resource "aws_route53_record" "jellyfin_ipv4" {
+  zone_id = var.route53_hosted_zone_id
+  name    = "jellyfin.${var.base_domain}"
+  type    = "A"
+  ttl     = 300
+  records = [module.kube-hetzner.ingress_public_ipv4]
+}
+
+resource "aws_route53_record" "jellyfin_ipv6" {
+  zone_id = var.route53_hosted_zone_id
+  name    = "jellyfin.${var.base_domain}"
+  type    = "AAAA"
+  ttl     = 300
+  records = [module.kube-hetzner.ingress_public_ipv6]
+}
+
+resource "aws_route53_record" "seerr_ipv4" {
+  zone_id = var.route53_hosted_zone_id
+  name    = "seerr.${var.base_domain}"
+  type    = "A"
+  ttl     = 300
+  records = [module.kube-hetzner.ingress_public_ipv4]
+}
+
+resource "aws_route53_record" "seerr_ipv6" {
+  zone_id = var.route53_hosted_zone_id
+  name    = "seerr.${var.base_domain}"
+  type    = "AAAA"
+  ttl     = 300
+  records = [module.kube-hetzner.ingress_public_ipv6]
+}
+
+resource "aws_route53_record" "transmission_ipv4" {
+  zone_id = var.route53_hosted_zone_id
+  name    = "transmission.${var.base_domain}"
+  type    = "A"
+  ttl     = 300
+  records = [module.kube-hetzner.ingress_public_ipv4]
+}
+
+resource "aws_route53_record" "transmission_ipv6" {
+  zone_id = var.route53_hosted_zone_id
+  name    = "transmission.${var.base_domain}"
   type    = "AAAA"
   ttl     = 300
   records = [module.kube-hetzner.ingress_public_ipv6]
@@ -1327,4 +1417,10 @@ output "kubeconfig" {
   sensitive = true
   description = "Kubeconfig content with external IP address"
   value       = module.kube-hetzner.kubeconfig
+}
+
+variable "hcloud_storage_box_password" {
+  type        = string
+  description = "Password for the Hetzner Storage Box, provided via TF_VAR_hcloud_storage_box_password"
+  sensitive   = true
 }
