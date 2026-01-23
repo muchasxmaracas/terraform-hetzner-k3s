@@ -147,7 +147,7 @@ module "kube-hetzner" {
     },
     {
       name        = "control-plane-1",
-      server_type = "cx22",
+      server_type = "cx33",
       location    = "nbg1",
       labels      = [],
       taints      = [],
@@ -170,7 +170,7 @@ module "kube-hetzner" {
     },
     {
       name        = "control-plane-2",
-      server_type = "cx22",
+      server_type = "cx33",
       location    = "hel1",
       labels      = [],
       taints      = [],
