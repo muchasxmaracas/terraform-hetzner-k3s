@@ -1224,6 +1224,27 @@ resource "hcloud_storage_box" "storage-box-1" {
   location = "fsn1"
   storage_box_type = "bx21"
   password         = var.hcloud_storage_box_password
+
+  access_settings = {
+  reachable_externally = true
+  samba_enabled        = true
+  ssh_enabled          = true
+  webdav_enabled       = true
+  zfs_enabled          = true
+  }
+
+  snapshot_plan = {
+    max_snapshots = 10
+    minute        = 16
+    hour          = 03
+    day_of_week   = 3
+  }
+
+  delete_protection = true
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 import {
@@ -1276,70 +1297,6 @@ resource "aws_route53_record" "rancher_ipv4" {
 resource "aws_route53_record" "rancher_ipv6" {
   zone_id = var.route53_hosted_zone_id
   name    = "rancher.${var.base_domain}"
-  type    = "AAAA"
-  ttl     = 300
-  records = [module.kube-hetzner.ingress_public_ipv6]
-}
-
-resource "aws_route53_record" "argocd_ipv4" {
-  zone_id = var.route53_hosted_zone_id
-  name    = "argocd.${var.base_domain}"
-  type    = "A"
-  ttl     = 300
-  records = [module.kube-hetzner.ingress_public_ipv4]
-}
-
-resource "aws_route53_record" "argocd_ipv6" {
-  zone_id = var.route53_hosted_zone_id
-  name    = "argocd.${var.base_domain}"
-  type    = "AAAA"
-  ttl     = 300
-  records = [module.kube-hetzner.ingress_public_ipv6]
-}
-
-resource "aws_route53_record" "jellyfin_ipv4" {
-  zone_id = var.route53_hosted_zone_id
-  name    = "jellyfin.${var.base_domain}"
-  type    = "A"
-  ttl     = 300
-  records = [module.kube-hetzner.ingress_public_ipv4]
-}
-
-resource "aws_route53_record" "jellyfin_ipv6" {
-  zone_id = var.route53_hosted_zone_id
-  name    = "jellyfin.${var.base_domain}"
-  type    = "AAAA"
-  ttl     = 300
-  records = [module.kube-hetzner.ingress_public_ipv6]
-}
-
-resource "aws_route53_record" "seerr_ipv4" {
-  zone_id = var.route53_hosted_zone_id
-  name    = "seerr.${var.base_domain}"
-  type    = "A"
-  ttl     = 300
-  records = [module.kube-hetzner.ingress_public_ipv4]
-}
-
-resource "aws_route53_record" "seerr_ipv6" {
-  zone_id = var.route53_hosted_zone_id
-  name    = "seerr.${var.base_domain}"
-  type    = "AAAA"
-  ttl     = 300
-  records = [module.kube-hetzner.ingress_public_ipv6]
-}
-
-resource "aws_route53_record" "transmission_ipv4" {
-  zone_id = var.route53_hosted_zone_id
-  name    = "transmission.${var.base_domain}"
-  type    = "A"
-  ttl     = 300
-  records = [module.kube-hetzner.ingress_public_ipv4]
-}
-
-resource "aws_route53_record" "transmission_ipv6" {
-  zone_id = var.route53_hosted_zone_id
-  name    = "transmission.${var.base_domain}"
   type    = "AAAA"
   ttl     = 300
   records = [module.kube-hetzner.ingress_public_ipv6]
